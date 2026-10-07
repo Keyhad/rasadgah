@@ -1,0 +1,68 @@
+name: rasadgah
+
+services:
+  app:
+    build:
+      context: .
+      target: runtime
+    image: ${APP_IMAGE:-rasadgah}:${APP_TAG:-local}
+    environment:
+      TOKENS_PER_HOUR: ${TOKENS_PER_HOUR:-30}
+      MAX_UPLOAD_BYTES: ${MAX_UPLOAD_BYTES:-262144}
+    volumes:
+      - kpi_data:/data
+    expose:
+      - "3000"
+    restart: unless-stopped
+
+  proxy:
+    image: caddy:2-alpine
+    depends_on:
+      app:
+        condition: service_healthy
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:-localhost}
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+      - "${HTTPS_PORT:-443}:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    restart: unless-stopped
+
+  dev:
+    profiles: [dev]
+    build:
+      context: .
+      target: dev
+    ports:
+      - "3000:3000"
+    environment:
+      DATA_DIR: /app/.data
+      WATCHPACK_POLLING: "true"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+
+  test:
+    profiles: [test]
+    build:
+      context: .
+      target: test
+
+  e2e:
+    profiles: [test]
+    build:
+      context: .
+      target: e2e
+    ipc: host
+    volumes:
+      - ./playwright-report:/app/playwright-report
+
+volumes:
+  kpi_data:
+  caddy_data:
+  caddy_config:

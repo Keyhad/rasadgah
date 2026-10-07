@@ -1,0 +1,27 @@
+{$SITE_ADDRESS:localhost} {
+	encode zstd gzip
+
+	request_body {
+		max_size 1MB
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+
+	@static path /_next/static/*
+	header @static Cache-Control "public, max-age=31536000, immutable"
+
+	# Query strings carry tokens; keep them out of access logs.
+	log {
+		format filter {
+			request>uri query {
+				replace token REDACTED
+			}
+			request>headers>Authorization delete
+		}
+	}
+
+	reverse_proxy app:3000
+}

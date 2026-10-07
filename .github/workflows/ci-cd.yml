@@ -1,0 +1,161 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  verify:
+    name: Lint, typecheck, unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run test:coverage
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage
+          path: coverage/
+          retention-days: 14
+
+  e2e:
+    name: End-to-end tests
+    runs-on: ubuntu-latest
+    needs: verify
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14
+
+  docker:
+    name: Docker image + HTTPS smoke test
+    runs-on: ubuntu-latest
+    needs: verify
+    permissions:
+      contents: read
+      packages: write
+    env:
+      PUBLISH: ${{ github.event_name == 'push' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build runtime image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: runtime
+          load: true
+          tags: rasadgah:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Smoke test through Caddy (HTTPS)
+        env:
+          APP_TAG: ci
+        run: |
+          docker compose up -d --no-build --wait
+          base=https://localhost
+          curl -fsSk --retry 15 --retry-all-errors --retry-delay 1 "$base/api/health"
+          token=$(curl -fsSk -X POST "$base/api/tokens" | jq -r .token)
+          curl -fsSk -X PUT "$base/api/kpis" -H "Authorization: Bearer $token" \
+            -H 'Content-Type: application/json' --data-binary @public/kpis.example.json
+          curl -fsSk "$base/?token=$token" | grep -q 'Monthly revenue'
+          test "$(curl -sSko /dev/null -w '%{http_code}' -H 'Authorization: Bearer bogus' "$base/api/kpis")" = 401
+          test "$(curl -sSo /dev/null -w '%{http_code}' http://localhost/)" = 308
+
+      - name: Compose logs
+        if: failure()
+        run: docker compose logs
+
+      - name: Image metadata
+        id: meta
+        if: env.PUBLISH == 'true'
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository }}
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=sha,format=long
+
+      - uses: docker/login-action@v3
+        if: env.PUBLISH == 'true'
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish image
+        if: env.PUBLISH == 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: runtime
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    needs: [e2e, docker]
+    # Opt-in: set repository variables DEPLOY_HOST + SITE_ADDRESS and secrets DEPLOY_USER + DEPLOY_SSH_KEY.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.DEPLOY_HOST != ''
+    environment:
+      name: production
+      url: https://${{ vars.SITE_ADDRESS }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure SSH
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          HOST: ${{ vars.DEPLOY_HOST }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "$HOST" >> ~/.ssh/known_hosts
+      - name: Roll out with docker compose
+        env:
+          TARGET: ${{ secrets.DEPLOY_USER }}@${{ vars.DEPLOY_HOST }}
+          SITE_ADDRESS: ${{ vars.SITE_ADDRESS }}
+        run: |
+          image="${REGISTRY}/${GITHUB_REPOSITORY,,}"
+          ssh "$TARGET" 'mkdir -p ~/rasadgah'
+          scp compose.yaml Caddyfile "$TARGET:~/rasadgah/"
+          ssh "$TARGET" "cd ~/rasadgah && \
+            export APP_IMAGE='$image' APP_TAG='sha-$GITHUB_SHA' SITE_ADDRESS='$SITE_ADDRESS' && \
+            docker compose pull app proxy && docker compose up -d --no-build --wait && docker image prune -f"

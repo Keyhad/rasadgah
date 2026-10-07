@@ -1,0 +1,33 @@
+{
+  "$description": "Rasadgah colour tokens in Design Tokens Community Group format. Mirror of branding.yml, which is authoritative.",
+  "brand": {
+    "sky-400": { "$type": "color", "$value": "#38BDF8" },
+    "sky-700": { "$type": "color", "$value": "#0369A1" },
+    "star-400": { "$type": "color", "$value": "#FBBF24" },
+    "navy-900": { "$type": "color", "$value": "#0F172A" }
+  },
+  "dark": {
+    "bg": { "$type": "color", "$value": "{brand.navy-900}" },
+    "panel": { "$type": "color", "$value": "#1E293B" },
+    "border": { "$type": "color", "$value": "#334155" },
+    "text": { "$type": "color", "$value": "#E2E8F0" },
+    "muted": { "$type": "color", "$value": "#94A3B8" },
+    "accent": { "$type": "color", "$value": "{brand.sky-400}" },
+    "on-accent": { "$type": "color", "$value": "{brand.navy-900}" }
+  },
+  "light": {
+    "bg": { "$type": "color", "$value": "#F8FAFC" },
+    "panel": { "$type": "color", "$value": "#FFFFFF" },
+    "border": { "$type": "color", "$value": "#E2E8F0" },
+    "text": { "$type": "color", "$value": "{brand.navy-900}" },
+    "muted": { "$type": "color", "$value": "#475569" },
+    "accent": { "$type": "color", "$value": "{brand.sky-700}" },
+    "on-accent": { "$type": "color", "$value": "#FFFFFF" }
+  },
+  "semantic": {
+    "positive": { "$type": "color", "$value": "#4ADE80" },
+    "negative": { "$type": "color", "$value": "#F87171" },
+    "neutral": { "$type": "color", "$value": "#94A3B8" },
+    "target": { "$type": "color", "$value": "{brand.star-400}" }
+  }
+}

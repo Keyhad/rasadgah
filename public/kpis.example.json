@@ -1,0 +1,50 @@
+{
+  "generatedAt": "2026-10-07T08:00:00Z",
+  "kpis": [
+    {
+      "id": "revenue",
+      "label": "Monthly revenue",
+      "value": 128400,
+      "previousValue": 117250,
+      "target": 125000,
+      "unit": "currency",
+      "currency": "USD",
+      "direction": "higher_is_better"
+    },
+    {
+      "id": "active-users",
+      "label": "Active users",
+      "value": 8421,
+      "previousValue": 8902,
+      "target": 9000,
+      "unit": "number",
+      "direction": "higher_is_better"
+    },
+    {
+      "id": "conversion",
+      "label": "Conversion rate",
+      "value": 3.8,
+      "previousValue": 3.5,
+      "unit": "percent",
+      "direction": "higher_is_better"
+    },
+    {
+      "id": "p95-latency",
+      "label": "API latency (p95)",
+      "value": 245,
+      "previousValue": 310,
+      "target": 300,
+      "unit": "duration_ms",
+      "direction": "lower_is_better"
+    },
+    {
+      "id": "churn",
+      "label": "Churn rate",
+      "value": 2.1,
+      "previousValue": 2.1,
+      "target": 2,
+      "unit": "percent",
+      "direction": "lower_is_better"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+.git
+.github
+.ai
+docs
+*.md
+.next
+.data
+node_modules
+coverage
+playwright-report
+test-results
+*.log
+.env
+.env.*
+Dockerfile
+compose.yaml

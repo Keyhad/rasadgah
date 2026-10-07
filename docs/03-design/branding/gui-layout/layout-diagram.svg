@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 560" width="1000" height="560" font-family="'Inter', system-ui, sans-serif" role="img" aria-labelledby="title">
+  <title id="title">Rasadgah GUI layout: start screen and dashboard</title>
+  <rect width="1000" height="560" fill="#F8FAFC"/>
+
+  <!-- Start screen -->
+  <text x="24" y="30" font-size="13" font-weight="700" fill="#0F172A">Start screen — /</text>
+  <g transform="translate(24 44)">
+    <rect width="360" height="480" rx="10" fill="#0F172A"/>
+    <rect width="360" height="44" rx="10" fill="#0F172A"/>
+    <line x1="0" y1="44" x2="360" y2="44" stroke="#334155"/>
+    <rect x="14" y="12" width="20" height="20" rx="5" fill="#38BDF8"/>
+    <text x="42" y="27" font-size="13" font-weight="700" fill="#E2E8F0">Rasadgah</text>
+    <text x="112" y="27" font-size="11" fill="#94A3B8">KPI observatory</text>
+
+    <rect x="16" y="60" width="328" height="190" rx="8" fill="#1E293B" stroke="#334155"/>
+    <text x="30" y="84" font-size="12" font-weight="600" fill="#E2E8F0">Your access token</text>
+    <text x="30" y="104" font-size="10" fill="#94A3B8">Save this token. It cannot be recovered.</text>
+    <rect x="30" y="118" width="230" height="30" rx="6" fill="#0F172A" stroke="#334155"/>
+    <text x="40" y="137" font-size="10" font-family="ui-monospace, monospace" fill="#E2E8F0">wA8-rjE-pGXEvhg5nCiAtG6uKwt9SqIm</text>
+    <rect x="270" y="118" width="60" height="30" rx="6" fill="#38BDF8"/>
+    <text x="284" y="137" font-size="11" font-weight="600" fill="#0F172A">Copy</text>
+    <text x="30" y="176" font-size="10" fill="#94A3B8">Expires Oct 14, 2026, 4:06 PM UTC</text>
+    <text x="30" y="200" font-size="11" fill="#38BDF8" text-decoration="underline">Open my dashboard</text>
+    <text x="30" y="234" font-size="9" fill="#64748B">TokenPanel</text>
+
+    <rect x="16" y="266" width="328" height="130" rx="8" fill="#1E293B" stroke="#334155"/>
+    <text x="30" y="290" font-size="12" font-weight="600" fill="#E2E8F0">Upload KPIs</text>
+    <text x="30" y="310" font-size="10" fill="#94A3B8">JSON file (download an example)</text>
+    <rect x="30" y="326" width="200" height="30" rx="6" fill="#0F172A" stroke="#334155"/>
+    <text x="40" y="345" font-size="10" fill="#94A3B8">Choose file…</text>
+    <rect x="240" y="326" width="70" height="30" rx="6" fill="#38BDF8"/>
+    <text x="252" y="345" font-size="11" font-weight="600" fill="#0F172A">Upload</text>
+    <text x="30" y="382" font-size="9" fill="#64748B">UploadForm</text>
+  </g>
+
+  <!-- Dashboard -->
+  <text x="408" y="30" font-size="13" font-weight="700" fill="#0F172A">Dashboard — /?token=…</text>
+  <g transform="translate(408 44)">
+    <rect width="568" height="480" rx="10" fill="#0F172A"/>
+    <line x1="0" y1="44" x2="568" y2="44" stroke="#334155"/>
+    <rect x="14" y="12" width="20" height="20" rx="5" fill="#38BDF8"/>
+    <text x="42" y="27" font-size="13" font-weight="700" fill="#E2E8F0">Rasadgah</text>
+    <text x="112" y="27" font-size="11" fill="#94A3B8">KPI observatory</text>
+
+    <rect x="16" y="60" width="536" height="76" rx="8" fill="#1E293B" stroke="#334155"/>
+    <text x="30" y="84" font-size="12" font-weight="600" fill="#E2E8F0">Dashboard</text>
+    <text x="30" y="106" font-size="9" fill="#94A3B8">Last upload</text>
+    <text x="30" y="122" font-size="10" font-weight="600" fill="#E2E8F0">Oct 7, 2026, 4:06 PM UTC</text>
+    <text x="210" y="106" font-size="9" fill="#94A3B8">Token expires</text>
+    <text x="210" y="122" font-size="10" font-weight="600" fill="#E2E8F0">Oct 14, 2026, 4:06 PM UTC</text>
+    <text x="400" y="106" font-size="9" fill="#94A3B8">On target</text>
+    <text x="400" y="122" font-size="10" font-weight="600" fill="#E2E8F0">2 / 4</text>
+
+    <g font-size="9">
+      <g transform="translate(16 150)">
+        <rect width="125" height="110" rx="8" fill="#1E293B" stroke="#334155"/>
+        <rect width="4" height="110" rx="2" fill="#4ADE80"/>
+        <text x="14" y="22" fill="#94A3B8">Monthly revenue</text>
+        <text x="14" y="50" font-size="18" font-weight="700" fill="#E2E8F0">$128,400</text>
+        <text x="14" y="72" fill="#4ADE80">▲ +9.5%</text>
+        <text x="14" y="92" fill="#E2E8F0">On target</text>
+      </g>
+      <g transform="translate(153 150)">
+        <rect width="125" height="110" rx="8" fill="#1E293B" stroke="#334155"/>
+        <rect width="4" height="110" rx="2" fill="#F87171"/>
+        <text x="14" y="22" fill="#94A3B8">Active users</text>
+        <text x="14" y="50" font-size="18" font-weight="700" fill="#E2E8F0">8,421</text>
+        <text x="14" y="72" fill="#F87171">▼ -5.4%</text>
+        <text x="14" y="92" fill="#F87171">Off target</text>
+      </g>
+      <g transform="translate(290 150)">
+        <rect width="125" height="110" rx="8" fill="#1E293B" stroke="#334155"/>
+        <rect width="4" height="110" rx="2" fill="#4ADE80"/>
+        <text x="14" y="22" fill="#94A3B8">Conversion rate</text>
+        <text x="14" y="50" font-size="18" font-weight="700" fill="#E2E8F0">3.8%</text>
+        <text x="14" y="72" fill="#4ADE80">▲ +8.6%</text>
+      </g>
+      <g transform="translate(427 150)">
+        <rect width="125" height="110" rx="8" fill="#1E293B" stroke="#334155"/>
+        <rect width="4" height="110" rx="2" fill="#4ADE80"/>
+        <text x="14" y="22" fill="#94A3B8">API latency (p95)</text>
+        <text x="14" y="50" font-size="18" font-weight="700" fill="#E2E8F0">245 ms</text>
+        <text x="14" y="72" fill="#4ADE80">▼ -21%</text>
+        <text x="14" y="92" fill="#E2E8F0">On target</text>
+      </g>
+    </g>
+    <text x="16" y="278" font-size="9" fill="#64748B">KPI grid — repeat(auto-fill, minmax(220px, 1fr)); 4 columns at max width</text>
+
+    <rect x="16" y="292" width="536" height="104" rx="8" fill="#1E293B" stroke="#334155"/>
+    <text x="30" y="316" font-size="12" font-weight="600" fill="#E2E8F0">Update KPIs</text>
+    <text x="30" y="336" font-size="10" fill="#94A3B8">Every upload extends the token lifetime by one week.</text>
+    <rect x="30" y="350" width="200" height="30" rx="6" fill="#0F172A" stroke="#334155"/>
+    <text x="40" y="369" font-size="10" fill="#94A3B8">Choose file…</text>
+    <rect x="240" y="350" width="70" height="30" rx="6" fill="#38BDF8"/>
+    <text x="252" y="369" font-size="11" font-weight="600" fill="#0F172A">Upload</text>
+
+    <rect x="16" y="412" width="536" height="52" rx="8" fill="#1E293B" stroke="#F87171"/>
+    <text x="30" y="434" font-size="11" font-weight="600" fill="#E2E8F0">Notice screen (replaces all panels): Token expired or unknown</text>
+    <text x="30" y="452" font-size="10" fill="#38BDF8" text-decoration="underline">Get a new token</text>
+  </g>
+</svg>

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-labelledby="title">
+  <title id="title">Concept B — Lens and trend</title>
+  <rect width="64" height="64" rx="14" fill="#0F172A"/>
+  <line x1="42" y1="42" x2="53" y2="53" stroke="#38BDF8" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="29" cy="29" r="17" fill="#1E293B" stroke="#38BDF8" stroke-width="4"/>
+  <polyline points="18,36 24,30 30,33 39,22" fill="none" stroke="#FBBF24" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="39" cy="22" r="3" fill="#FBBF24"/>
+</svg>
