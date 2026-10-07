@@ -3,7 +3,7 @@ id: DES-012
 title: GUI Layout
 type: design
 status: approved
-version: 2.1
+version: 2.2
 owner: design
 audience:
   - developer
@@ -32,6 +32,8 @@ tags:
   - [4.3 Token panel](#43-token-panel)
   - [4.4 Copy field](#44-copy-field)
   - [4.5 Freshness line](#45-freshness-line)
+  - [4.6 JSON editor](#46-json-editor)
+  - [4.7 Empty-state hero](#47-empty-state-hero)
 - [5. Responsive Behaviour](#5-responsive-behaviour)
 - [6. Accessibility](#6-accessibility)
 - [7. Related Documents](#7-related-documents)
@@ -67,15 +69,18 @@ A successful upload navigates to the editor.
 | 1     | Status panel | Heading "Editor"; definition list: "Last upload" (UTC time and age), "Tokens expire", "On target" (`met / with target`, only when a KPI has a target); copy field "Share link (read-only)" |
 | 2     | KPI grid     | One KPI card per KPI (Section 4.1); or the empty state "No KPIs uploaded yet…" in a panel                                                                                                  |
 | 3     | Update panel | Heading "Update KPIs", note that every upload extends both tokens by one week, upload form                                                                                                 |
+| 4     | Edit panel   | Heading "Edit JSON", one-sentence hint, JSON editor (Section 4.6)                                                                                                                          |
 
 ### 3.3 Shared view (read token)
 
 Deliberately minimal (REQ-009): no panels, controls or token information.
 
-| Order | Region         | Content                                                                                                 |
-| ----- | -------------- | ------------------------------------------------------------------------------------------------------- |
-| 1     | Freshness line | Section 4.5                                                                                             |
-| 2     | KPI grid       | One KPI card per KPI; "The latest upload contains no KPIs." when empty; omitted before the first upload |
+| Order | Region         | Content              |
+| ----- | -------------- | -------------------- |
+| 1     | Freshness line | Section 4.5          |
+| 2     | KPI grid       | One KPI card per KPI |
+
+While there are no KPIs to show, both regions are replaced by the empty-state hero (Section 4.7).
 
 ### 3.4 Notice (invalid token or rate limit)
 
@@ -122,7 +127,36 @@ Updated 3 hours ago (Oct 7, 2026, 9:00 AM UTC) · data as of Oct 7, 2026, 8:00 A
         └ <time datetime="…">, --text, 600 ┘  └ 0.85 rem, --muted ┘   └ only when generatedAt is set ┘
 ```
 
-The age is computed on the server at request time. Before the first upload the line reads "No KPIs published yet."
+The age is computed on the server at request time.
+
+### 4.6 JSON editor
+
+| Element  | Presentation                                                                                                                       |
+| -------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Label    | "KPI JSON", 0.85 rem, `--muted`                                                                                                    |
+| Text box | `<textarea>`, full width, min. height 20 rem, monospace 0.9 rem, `--bg` background, 2-space tabs, spell check off, vertical resize |
+| Content  | Stored report pretty-printed with 2 spaces; before the first upload, a one-KPI template                                            |
+| Save     | Primary button; label "Saving…" while the request runs; on success `role="status"` "Saved." and the page refreshes                 |
+| Format   | Secondary (outlined) button; re-indents valid JSON                                                                                 |
+| Reset    | Secondary button; restores the stored content; disabled while unchanged                                                            |
+| Errors   | Same alert block as the upload form; invalid JSON shows "Invalid JSON: …" without a request                                        |
+
+### 4.7 Empty-state hero
+
+```text
+                 ┌────────────────────────────────────┐
+                 │   [logo-dark.svg, up to 900 px]    │
+                 │                                    │
+                 │       Observe what matters.        │  clamp(2rem, 6vw, 4.5rem), 700
+                 │                                    │
+                 │       No KPIs published yet.       │  --muted
+                 └────────────────────────────────────┘
+       min-height: 100vh − 10 rem, content centred on both axes, 2 rem gap
+```
+
+- Element: `<section aria-labelledby="hero-slogan">`; the logo image has the alternative text "Rasadgah — KPI observatory".
+- After an upload without KPIs, the note reads "The latest upload contains no KPIs." followed by the freshness line.
+- Asset: [public/brand/logo-dark.svg](../../../../public/brand/logo-dark.svg), a copy of [logo-dark.svg](../logo/logo-dark.svg).
 
 ## 5. Responsive Behaviour
 
@@ -137,6 +171,7 @@ The age is computed on the server at request time. Before the first upload the l
 - Assessment is never conveyed by colour alone (see [DES-011, Section 5](../color-palette/color-palette.md#5-semantic-colours)).
 - Form messages use `role="status"` and `role="alert"` so that screen readers announce them.
 - The file input has a visible `<label>`.
+- The JSON text box has a visible `<label>`; Format and Reset are keyboard-reachable buttons.
 
 ## 7. Related Documents
 

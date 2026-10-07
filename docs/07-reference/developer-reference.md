@@ -76,6 +76,9 @@ Each `create*` factory takes `Deps` (`store`, `tokens`, `clock`) and returns an 
 | [components/TokenPanel.tsx](../../src/presentation/components/TokenPanel.tsx)                   | Start screen: write token, read token, expiry, links                                                                            |
 | [components/CopyField.tsx](../../src/presentation/components/CopyField.tsx)                     | Client component: value with a copy button; copies absolute URLs for links                                                      |
 | [components/UploadForm.tsx](../../src/presentation/components/UploadForm.tsx)                   | Client component: file upload via `PUT /api/kpis`                                                                               |
+| [components/JsonEditor.tsx](../../src/presentation/components/JsonEditor.tsx)                   | Client component: editable report JSON with Save, Format, Reset; `KPI_TEMPLATE`                                                 |
+| [components/useKpiUpload.ts](../../src/presentation/components/useKpiUpload.ts)                 | Hook shared by `UploadForm` and `JsonEditor`: `PUT /api/kpis` with the write token, state, refresh on success                   |
+| [components/UploadStatus.tsx](../../src/presentation/components/UploadStatus.tsx)               | Success status or error alert with field details                                                                                |
 | [components/Notice.tsx](../../src/presentation/components/Notice.tsx)                           | Alert with a link to `/`                                                                                                        |
 
 ### 2.5 Server and Next.js entry points

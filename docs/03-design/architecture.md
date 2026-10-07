@@ -123,7 +123,7 @@ Purpose: translate between HTTP/React and use cases.
 Responsibilities:
 
 - `http/handlers.ts` — framework-independent `Request → Response` handlers for the API (API-001).
-- `components/` — `DashboardView` (editor, write token), `SharedDashboardView` (read token), `KpiGrid`, `KpiCard`, `Freshness`, `TokenPanel`, `CopyField` (client), `UploadForm` (client), `Notice`.
+- `components/` — `DashboardView` (editor, write token), `SharedDashboardView` (read token, with empty-state hero), `KpiGrid`, `KpiCard`, `Freshness`, `TokenPanel`, `CopyField` (client), `UploadForm` and `JsonEditor` (client, sharing the `useKpiUpload` hook), `UploadStatus`, `Notice`.
 
 Dependencies: application. Receives use cases as arguments; never imports the composition root.
 

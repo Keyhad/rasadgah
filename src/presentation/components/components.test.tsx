@@ -10,6 +10,8 @@ import { Notice } from './Notice';
 import { SharedDashboardView } from './SharedDashboardView';
 import { TokenPanel } from './TokenPanel';
 import { UploadForm } from './UploadForm';
+import { JsonEditor, KPI_TEMPLATE } from './JsonEditor';
+import { SLOGAN } from './SharedDashboardView';
 
 const router = { push: vi.fn(), refresh: vi.fn() };
 vi.mock('next/navigation', () => ({ useRouter: () => router }));
@@ -37,6 +39,7 @@ const dashboard = (overrides: Partial<DashboardViewModel> = {}): DashboardViewMo
   expiresAt: 'Oct 8, 2026, 12:00 AM UTC',
   updated: { iso: '2026-10-01T00:00:00.000Z', label: 'Oct 1, 2026, 12:00 AM UTC', age: '3 hours ago' },
   dataAsOf: null,
+  reportJson: '{\n  "kpis": []\n}',
   kpis: [card(), card({ id: 'nps', label: 'NPS', targetStatus: 'none', target: null })],
   summary: { total: 2, withTarget: 1, onTarget: 1 },
   ...overrides,
@@ -77,19 +80,29 @@ describe('DashboardView (write token)', () => {
     expect(screen.getByTestId('share-link')).toHaveTextContent(`/?token=${READ}`);
     expect(screen.getByRole('link', { name: 'Open' })).toHaveAttribute('href', `/?token=${READ}`);
     expect(screen.getByLabelText('KPI file (JSON)')).toBeInTheDocument();
+    expect(screen.getByLabelText('KPI JSON')).toHaveValue('{\n  "kpis": []\n}');
+    expect(screen.getByText(/Change the current KPIs/)).toBeInTheDocument();
   });
 
   it('renders an empty state before the first upload', () => {
     render(
       <DashboardView
         token={TOKEN}
-        dashboard={dashboard({ updated: null, readToken: null, kpis: [], summary: EMPTY_SUMMARY })}
+        dashboard={dashboard({
+          updated: null,
+          readToken: null,
+          reportJson: null,
+          kpis: [],
+          summary: EMPTY_SUMMARY,
+        })}
       />,
     );
     expect(screen.getByText('Never')).toBeInTheDocument();
     expect(screen.getByText(/No KPIs uploaded yet/)).toBeInTheDocument();
     expect(screen.queryByText('On target')).not.toBeInTheDocument();
     expect(screen.queryByTestId('share-link')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('KPI JSON')).toHaveValue(KPI_TEMPLATE);
+    expect(screen.getByText(/Start from this template/)).toBeInTheDocument();
   });
 });
 
@@ -111,15 +124,24 @@ describe('SharedDashboardView (read token)', () => {
     expect(screen.queryByText(TOKEN)).not.toBeInTheDocument();
   });
 
-  it('says when nothing has been published', () => {
+  it('fills the page with the logo and slogan before the first upload', () => {
     render(<SharedDashboardView dashboard={shared({ updated: null, kpis: [], summary: EMPTY_SUMMARY })} />);
-    expect(screen.getByText('No KPIs published yet.')).toBeInTheDocument();
+    const hero = screen.getByRole('region', { name: SLOGAN });
+    expect(within(hero).getByRole('img', { name: 'Rasadgah — KPI observatory' })).toHaveAttribute(
+      'src',
+      '/brand/logo-dark.svg',
+    );
+    expect(within(hero).getByText(SLOGAN)).toHaveClass('hero__slogan');
+    expect(within(hero).getByText('No KPIs published yet.')).toBeInTheDocument();
     expect(screen.queryByRole('article')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('freshness')).not.toBeInTheDocument();
   });
 
-  it('says when the latest upload is empty', () => {
+  it('shows the hero with freshness when the latest upload is empty', () => {
     render(<SharedDashboardView dashboard={shared({ kpis: [], summary: EMPTY_SUMMARY })} />);
-    expect(screen.getByText('The latest upload contains no KPIs.')).toBeInTheDocument();
+    const hero = screen.getByRole('region', { name: SLOGAN });
+    expect(within(hero).getByText('The latest upload contains no KPIs.')).toBeInTheDocument();
+    expect(within(hero).getByTestId('freshness')).toHaveTextContent('Updated 3 hours ago');
   });
 });
 
@@ -196,6 +218,12 @@ describe('UploadForm', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it('disables the button while uploading', async () => {
+    fetchMock.mockReturnValue(new Promise(() => {}));
+    await upload('{}');
+    expect(screen.getByRole('button', { name: 'Uploading…' })).toBeDisabled();
+  });
+
   it('uploads the file with the bearer token and opens the dashboard', async () => {
     fetchMock.mockResolvedValue(jsonResponse({}));
     await upload('{"kpis":[]}');
@@ -229,5 +257,86 @@ describe('UploadForm', () => {
     fetchMock.mockRejectedValue(new TypeError('offline'));
     await upload('{}');
     expect(await screen.findByRole('alert')).toHaveTextContent('Network error. Please try again.');
+  });
+});
+
+describe('JsonEditor', () => {
+  const fetchMock = vi.fn<typeof fetch>();
+  const INITIAL = '{\n  "kpis": []\n}';
+
+  beforeEach(() => {
+    vi.stubGlobal('fetch', fetchMock);
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    fetchMock.mockReset();
+    router.push.mockReset();
+    router.refresh.mockReset();
+  });
+
+  async function edit(text: string) {
+    const user = userEvent.setup();
+    render(<JsonEditor token={TOKEN} initialJson={INITIAL} />);
+    const textarea = screen.getByLabelText('KPI JSON');
+    await user.clear(textarea);
+    await user.click(textarea);
+    await user.paste(text);
+    return { user, textarea };
+  }
+
+  it('starts with the given JSON and Reset disabled', () => {
+    render(<JsonEditor token={TOKEN} initialJson={INITIAL} />);
+    expect(screen.getByLabelText('KPI JSON')).toHaveValue(INITIAL);
+    expect(screen.getByRole('button', { name: 'Reset' })).toBeDisabled();
+  });
+
+  it('saves the edited JSON with the write token', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({}));
+    const { user } = await edit('{"kpis":[{"id":"a","label":"A","value":2,"unit":"number"}]}');
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/kpis', {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
+      body: '{"kpis":[{"id":"a","label":"A","value":2,"unit":"number"}]}',
+    });
+    expect(await screen.findByRole('status')).toHaveTextContent('Saved.');
+    expect(router.refresh).toHaveBeenCalled();
+  });
+
+  it('rejects invalid JSON locally', async () => {
+    const { user } = await edit('{"kpis": [');
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+    expect(screen.getByRole('alert')).toHaveTextContent(/^Invalid JSON: /);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('shows server validation details', async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({ error: 'KPI file does not match the expected format.', details: ['kpis.0.label: required'] }, 422),
+    );
+    const { user } = await edit('{"kpis":[{"id":"x"}]}');
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+    const alert = await screen.findByRole('alert');
+    expect(within(alert).getByRole('listitem')).toHaveTextContent('kpis.0.label: required');
+  });
+
+  it('formats valid JSON and reports invalid JSON', async () => {
+    const { user, textarea } = await edit('{"kpis":[]}');
+    await user.click(screen.getByRole('button', { name: 'Format' }));
+    expect(textarea).toHaveValue(INITIAL);
+
+    await user.clear(textarea);
+    await user.paste('nope');
+    await user.click(screen.getByRole('button', { name: 'Format' }));
+    expect(screen.getByRole('alert')).toHaveTextContent('Invalid JSON');
+    expect(textarea).toHaveValue('nope');
+  });
+
+  it('resets to the stored JSON', async () => {
+    const { user, textarea } = await edit('{}');
+    await user.click(screen.getByRole('button', { name: 'Reset' }));
+    expect(textarea).toHaveValue(INITIAL);
+    expect(screen.getByRole('button', { name: 'Reset' })).toBeDisabled();
   });
 });

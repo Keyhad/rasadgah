@@ -21,7 +21,9 @@ logo:
     dark: "logo/logo-dark.svg"
     light: "logo/logo-light.svg"
     icon: "logo/logo-icon.svg"
-  app_copy: "public/brand/logo-icon.svg"
+  app_copies:
+    icon: "public/brand/logo-icon.svg"
+    dark: "public/brand/logo-dark.svg"
 
 typography:
   fonts:

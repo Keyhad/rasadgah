@@ -41,7 +41,8 @@ First version: token-based KPI dashboards served over HTTPS and deployed with Do
 - Write token and read token issued on first visit and via `POST /api/tokens` (REQ-001, [ADR-005](../03-design/adr/adr-005-read-and-write-tokens.md)).
 - KPI upload with the write token from the browser and via `PUT /api/kpis`, with validation; read tokens are rejected with HTTP 403 (REQ-002, REQ-003, REQ-010).
 - Server-rendered editor at `/?token=<write token>` with a copyable share link (REQ-004).
-- Clean shared view at `/?token=<read token>`: only the KPI cards and a freshness line such as "Updated 3 hours ago" (REQ-009).
+- Clean shared view at `/?token=<read token>`: only the KPI cards and a freshness line such as "Updated 3 hours ago"; until KPIs are published, a full-page logo and slogan (REQ-009).
+- JSON editor in the editor view, pre-filled with the stored KPIs, with Save, Format and Reset (REQ-011).
 - Sliding seven-day lifetime shared by both tokens, extended only by uploads, and deletion of expired data (REQ-005, REQ-008).
 - Caddy reverse proxy with automatic HTTPS.
 - Brand identity: observatory logo used as favicon and header mark, tagline "KPI observatory" ([REF-020](../03-design/branding/README.md)).

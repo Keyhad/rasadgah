@@ -36,6 +36,34 @@ test('write token uploads and edits; read token shows a clean, read-only page', 
   await expect(page.getByText(write)).toHaveCount(0);
 });
 
+test('shared view shows the logo and slogan until the first upload', async ({ page }) => {
+  await page.goto('/');
+  const { read } = await readTokens(page);
+  await page.goto(`/?token=${read}`);
+  const hero = page.getByRole('region', { name: 'Observe what matters.' });
+  await expect(hero.getByRole('img', { name: 'Rasadgah — KPI observatory' })).toBeVisible();
+  await expect(hero).toContainText('No KPIs published yet.');
+  await expect(page.getByRole('article')).toHaveCount(0);
+});
+
+test('editor JSON can be changed and saved again', async ({ page }) => {
+  await page.goto('/');
+  const { write, read } = await readTokens(page);
+  await page.getByLabel('KPI file (JSON)').setInputFiles(exampleFile);
+  await page.getByRole('button', { name: 'Upload', exact: true }).click();
+  await expect(page).toHaveURL(`/?token=${write}`);
+
+  const editor = page.getByLabel('KPI JSON');
+  await expect(editor).toHaveValue(/"value": 128400/);
+  await editor.fill((await editor.inputValue()).replace('"value": 128400', '"value": 130000'));
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(page.getByRole('status')).toHaveText('Saved.');
+  await expect(page.getByRole('article', { name: 'Monthly revenue' })).toContainText('$130,000');
+
+  await page.goto(`/?token=${read}`);
+  await expect(page.getByRole('article', { name: 'Monthly revenue' })).toContainText('$130,000');
+});
+
 test('each fresh visit issues different tokens', async ({ page }) => {
   await page.goto('/');
   const first = await readTokens(page);

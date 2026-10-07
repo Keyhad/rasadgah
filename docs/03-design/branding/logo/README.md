@@ -30,14 +30,14 @@ tags:
 
 ## 1. Asset Inventory
 
-| File | Size | Usage |
-| --- | --- | --- |
-| [logo.svg](logo.svg) | 360 × 96 | Primary lockup with its own navy background. Use where the background is unknown, for example README files. |
-| [logo-dark.svg](logo-dark.svg) | 360 × 96 | Transparent lockup for dark surfaces (`#0F172A`, `#1E293B`). |
-| [logo-light.svg](logo-light.svg) | 360 × 96 | Transparent lockup for light surfaces (`#F8FAFC`, `#FFFFFF`). |
-| [logo-icon.svg](logo-icon.svg) | 64 × 64 | Icon mark: favicon, application header, avatars. |
-| [source/](source/) | — | Editable lockups with live text (see Section 6). |
-| [candidates/](candidates/README.md) | — | Concepts considered and evaluation. |
+| File                                | Size     | Usage                                                                                                       |
+| ----------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------- |
+| [logo.svg](logo.svg)                | 360 × 96 | Primary lockup with its own navy background. Use where the background is unknown, for example README files. |
+| [logo-dark.svg](logo-dark.svg)      | 360 × 96 | Transparent lockup for dark surfaces (`#0F172A`, `#1E293B`).                                                |
+| [logo-light.svg](logo-light.svg)    | 360 × 96 | Transparent lockup for light surfaces (`#F8FAFC`, `#FFFFFF`).                                               |
+| [logo-icon.svg](logo-icon.svg)      | 64 × 64  | Icon mark: favicon, application header, avatars.                                                            |
+| [source/](source/)                  | —        | Editable lockups with live text (see Section 6).                                                            |
+| [candidates/](candidates/README.md) | —        | Concepts considered and evaluation.                                                                         |
 
 The text in the three lockups is converted to outlines, so they render identically without the brand fonts installed.
 
@@ -55,14 +55,14 @@ The wordmark "Rasadgah" is set in Outfit Bold, the tagline "KPI OBSERVATORY" in 
 
 On the 64 × 64 grid of [logo-icon.svg](logo-icon.svg):
 
-| Element | Geometry | Colour |
-| --- | --- | --- |
-| Tile | 64 × 64, corner radius 14 | `navy-900` `#0F172A` |
-| Dome | Arc, centre (32, 44), radius 22, stroke 4 | `sky-400` `#38BDF8` |
-| Base | 52 × 5 at (6, 44), radius 2.5 | `sky-400` |
-| Bars | 6 px wide, heights 7 / 11 / 15, opacity 55 % / 80 % / 100 % | `sky-400` |
-| Telescope | (40.5, 24.5) → (46, 14.5), stroke 4.5 | `sky-400` |
-| Star | Four-point star centred at (51, 9), radius 6.5 | `star-400` `#FBBF24` |
+| Element   | Geometry                                                    | Colour               |
+| --------- | ----------------------------------------------------------- | -------------------- |
+| Tile      | 64 × 64, corner radius 14                                   | `navy-900` `#0F172A` |
+| Dome      | Arc, centre (32, 44), radius 22, stroke 4                   | `sky-400` `#38BDF8`  |
+| Base      | 52 × 5 at (6, 44), radius 2.5                               | `sky-400`            |
+| Bars      | 6 px wide, heights 7 / 11 / 15, opacity 55 % / 80 % / 100 % | `sky-400`            |
+| Telescope | (40.5, 24.5) → (46, 14.5), stroke 4.5                       | `sky-400`            |
+| Star      | Four-point star centred at (51, 9), radius 6.5              | `star-400` `#FBBF24` |
 
 ## 4. Clear Space and Minimum Sizes
 
@@ -95,7 +95,7 @@ The files in [source/](source/) contain live `<text>`. To regenerate the outline
 
 ## 7. Use in the Application
 
-The icon mark is copied to [public/brand/logo-icon.svg](../../../../public/brand/logo-icon.svg). It is used as the favicon and in the application header ([src/app/layout.tsx](../../../../src/app/layout.tsx)). When the mark changes, update both files in the same change.
+The icon mark is copied to [public/brand/logo-icon.svg](../../../../public/brand/logo-icon.svg). It is used as the favicon and in the application header ([src/app/layout.tsx](../../../../src/app/layout.tsx)). The dark lockup is copied to [public/brand/logo-dark.svg](../../../../public/brand/logo-dark.svg) for the empty-state hero of the shared view ([DES-012, Section 4.7](../gui-layout/layout-description.md#47-empty-state-hero)). When a mark changes, update the source and its copy in the same change.
 
 ## 8. Related Documents
 

@@ -3,7 +3,7 @@ id: REQ-000
 title: System Requirements
 type: requirement
 status: proposed
-version: 1.1
+version: 1.2
 owner: engineering
 audience:
   - architect
@@ -32,6 +32,7 @@ tags:
   - [2.8 REQ-008 Data deletion](#28-req-008-data-deletion)
   - [2.9 REQ-009 Shared read-only view](#29-req-009-shared-read-only-view)
   - [2.10 REQ-010 Write-token privileges](#210-req-010-write-token-privileges)
+  - [2.11 REQ-011 JSON editor](#211-req-011-json-editor)
 - [3. Non-Functional Requirements](#3-non-functional-requirements)
   - [3.1 NFR-001 Encrypted transport](#31-nfr-001-encrypted-transport)
   - [3.2 NFR-002 Token secrecy](#32-nfr-002-token-secrecy)
@@ -164,13 +165,13 @@ The system shall delete the session of an expired dashboard no later than 1 hour
 
 #### 2.9.1 Requirement
 
-When a visitor opens `/?token=<read token>`, the system shall render only the KPI cards and a freshness line stating how long ago and at what time (UTC) the KPIs were last uploaded, and the `generatedAt` time of the KPI file when present. The view must not contain the write token, the expiry time, an upload form or other controls.
+When a visitor opens `/?token=<read token>`, the system shall render only the KPI cards and a freshness line stating how long ago and at what time (UTC) the KPIs were last uploaded, and the `generatedAt` time of the KPI file when present. The view must not contain the write token, the expiry time, an upload form or other controls. While the dashboard has no KPIs to show, the view shall instead fill the viewport with the brand lockup and the slogan "Observe what matters.", followed by "No KPIs published yet." before the first upload, or by "The latest upload contains no KPIs." and the freshness line afterwards.
 
 #### 2.9.2 Acceptance Criteria
 
 - [x] The view shows every KPI card and the text "Updated <age> (<UTC time>)".
 - [x] The view contains no buttons, no file input and no write token.
-- [x] Before the first upload the view states "No KPIs published yet."
+- [x] Before the first upload the view shows the logo, the slogan and "No KPIs published yet.", centred in a region at least as tall as the viewport minus the header.
 
 ### 2.10 REQ-010 Write-token privileges
 
@@ -182,6 +183,19 @@ Only the write token shall allow uploading KPIs, opening the editor and seeing t
 
 - [x] `PUT /api/kpis` with a read token returns HTTP 403.
 - [x] Opening `/?token=<read token>` renders the shared view, not the editor.
+
+### 2.11 REQ-011 JSON editor
+
+#### 2.11.1 Requirement
+
+The editor shall contain a text editor pre-filled with the stored report as indented JSON, or with a one-KPI template before the first upload. Saving shall submit the text as an upload with the write token under the same rules as REQ-002, REQ-003 and REQ-005. Text that is not valid JSON shall be rejected in the browser without a request. The editor shall offer formatting of valid JSON and resetting to the stored report.
+
+#### 2.11.2 Acceptance Criteria
+
+- [x] After an upload, the editor contains the stored report, including default values applied by validation.
+- [x] Changing a value and saving updates the KPI cards for both tokens.
+- [x] Invalid JSON shows "Invalid JSON: …" and sends no request.
+- [x] Server validation errors are listed by field, as for file uploads.
 
 ## 3. Non-Functional Requirements
 
@@ -280,6 +294,7 @@ Source code shall be organised in domain, application, infrastructure and presen
 | REQ-008     | DES-002           | TST-008          |
 | REQ-009     | DES-012, ADR-005  | TST-015          |
 | REQ-010     | DES-002, ADR-005  | TST-016          |
+| REQ-011     | DES-012           | TST-017          |
 | NFR-001     | ADR-003           | TST-009          |
 | NFR-002     | DES-002, ADR-005  | TST-010          |
 | NFR-003     | API-001           | TST-011          |

@@ -4,10 +4,9 @@ export function Freshness({
   updated,
   dataAsOf,
 }: {
-  updated: FreshnessModel | null;
+  updated: FreshnessModel;
   dataAsOf: string | null;
 }) {
-  if (!updated) return <p className="freshness">No KPIs published yet.</p>;
   return (
     <p className="freshness" data-testid="freshness">
       Updated{' '}

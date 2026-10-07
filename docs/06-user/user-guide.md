@@ -3,7 +3,7 @@ id: USR-001
 title: User Guide
 type: user-guide
 status: proposed
-version: 1.1
+version: 1.2
 audience:
   - user
 tags:
@@ -87,12 +87,18 @@ The status panel shows:
 
 Upload a new file under **Update KPIs** in the editor. The new file replaces all previous KPIs and extends the lifetime of both tokens by one week from now.
 
+To change a few values without preparing a file, use **Edit JSON** in the editor:
+
+1. The text box contains your current KPIs. Before the first upload it contains a one-KPI template.
+2. Change the JSON. **Format** re-indents it; **Reset** restores the stored version.
+3. Select **Save**. The change is published like an upload and extends both tokens. If the JSON is invalid or breaks a rule in [INT-001](../02-specification/kpi-file-format.md), the problems are listed below the text box and nothing is saved.
+
 ### 5.5 Share your KPIs
 
 1. In the editor, select **Copy** next to **Share link (read-only)**, or copy the read token from the start page.
 2. Send the link `https://<site>/?token=<read token>`.
 
-Viewers see only the KPI cards and a line such as "Updated 3 hours ago (Oct 7, 2026, 9:00 AM UTC)". If your file contains `generatedAt`, the line also shows "data as of …". Viewers cannot upload, cannot see your write token and do not extend the lifetime.
+Viewers see only the KPI cards and a line such as "Updated 3 hours ago (Oct 7, 2026, 9:00 AM UTC)". If your file contains `generatedAt`, the line also shows "data as of …". Until you publish KPIs, viewers see a full-page Rasadgah logo with the slogan "Observe what matters." and the note "No KPIs published yet." Viewers cannot upload, cannot see your write token and do not extend the lifetime.
 
 ## 6. Reading a KPI Card
 

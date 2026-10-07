@@ -46,6 +46,8 @@ export interface DashboardViewModel {
   readonly updated: Freshness | null;
   /** `generatedAt` from the KPI file, when provided. */
   readonly dataAsOf: string | null;
+  /** Stored report as pretty-printed JSON; only for write-token holders. */
+  readonly reportJson: string | null;
   readonly kpis: readonly KpiCardViewModel[];
   readonly summary: { readonly total: number; readonly withTarget: number; readonly onTarget: number };
 }
@@ -159,6 +161,8 @@ export function createGetDashboard(deps: Deps) {
           }
         : null,
       dataAsOf: generatedAt ? formatDateTime(generatedAt) : null,
+      reportJson:
+        access === 'write' && session.report ? JSON.stringify(session.report, null, 2) : null,
       kpis: cards,
       summary: {
         total: cards.length,

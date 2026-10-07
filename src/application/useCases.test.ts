@@ -175,6 +175,10 @@ describe('use cases', () => {
       target: '$110',
     });
     expect(dashboard.kpis[2]).toMatchObject({ change: '—', target: null, targetStatus: 'none' });
+    const edited = JSON.parse(dashboard.reportJson ?? 'null');
+    expect(edited.generatedAt).toBe(report.generatedAt);
+    expect(edited.kpis[0]).toMatchObject({ id: 'rev', direction: 'higher_is_better' });
+    expect(dashboard.reportJson).toContain('\n  "kpis": [');
   });
 
   it('hides the read token from read-token holders and omits missing timestamps', async () => {
@@ -184,10 +188,16 @@ describe('use cases', () => {
       readToken: null,
       updated: null,
       dataAsOf: null,
+      reportJson: null,
       kpis: [],
       summary: { total: 0, withTarget: 0, onTarget: 0 },
     });
+    await expect(app.getDashboard(WRITE)).resolves.toMatchObject({ reportJson: null });
     await app.uploadReport(WRITE, { kpis: [] });
-    await expect(app.getDashboard(READ)).resolves.toMatchObject({ dataAsOf: null, updated: { age: 'just now' } });
+    await expect(app.getDashboard(READ)).resolves.toMatchObject({
+      dataAsOf: null,
+      reportJson: null,
+      updated: { age: 'just now' },
+    });
   });
 });
