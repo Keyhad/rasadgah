@@ -2,8 +2,8 @@
 id: ADR-004
 title: Bearer-token access without user accounts
 type: decision
-status: approved
-version: 1.0
+status: deprecated
+version: 1.1
 audience:
   - architect
   - developer
@@ -13,6 +13,8 @@ tags:
 ---
 
 # Bearer-token access without user accounts
+
+> **Deprecated.** The single-token model is superseded by [ADR-005 Separate read and write tokens](adr-005-read-and-write-tokens.md). The decision against user accounts remains in force.
 
 ## Table of Contents
 

@@ -1,20 +1,22 @@
 import type { DashboardViewModel } from '@/application/useCases';
-import { KpiCard } from './KpiCard';
+import { CopyField } from './CopyField';
+import { KpiGrid } from './KpiGrid';
 import { UploadForm } from './UploadForm';
 
+/** Write-token view: status, share link, KPIs and the upload form. */
 export function DashboardView({ token, dashboard }: { token: string; dashboard: DashboardViewModel }) {
-  const { kpis, summary } = dashboard;
+  const { summary, updated } = dashboard;
   return (
     <>
       <section className="panel" aria-labelledby="status-heading">
-        <h2 id="status-heading">Dashboard</h2>
+        <h2 id="status-heading">Editor</h2>
         <dl className="meta">
           <div>
             <dt>Last upload</dt>
-            <dd>{dashboard.updatedAt ?? 'Never'}</dd>
+            <dd>{updated ? `${updated.label} (${updated.age})` : 'Never'}</dd>
           </div>
           <div>
-            <dt>Token expires</dt>
+            <dt>Tokens expire</dt>
             <dd>{dashboard.expiresAt}</dd>
           </div>
           {summary.withTarget > 0 && (
@@ -26,21 +28,24 @@ export function DashboardView({ token, dashboard }: { token: string; dashboard: 
             </div>
           )}
         </dl>
+        {dashboard.readToken && (
+          <CopyField
+            label="Share link (read-only)"
+            value={`/?token=${dashboard.readToken}`}
+            isLink
+            testId="share-link"
+          />
+        )}
       </section>
 
-      {kpis.length > 0 ? (
-        <section aria-label="Key performance indicators" className="kpi-grid">
-          {kpis.map((kpi) => (
-            <KpiCard key={kpi.id} kpi={kpi} />
-          ))}
-        </section>
-      ) : (
-        <p className="panel empty">No KPIs uploaded yet. Upload a JSON file to see them here.</p>
-      )}
+      <KpiGrid
+        kpis={dashboard.kpis}
+        emptyMessage="No KPIs uploaded yet. Upload a JSON file to see them here."
+      />
 
       <section className="panel" aria-labelledby="upload-heading">
         <h2 id="upload-heading">Update KPIs</h2>
-        <p>Every upload extends the token lifetime by one week.</p>
+        <p>Every upload extends the lifetime of both tokens by one week.</p>
         <UploadForm token={token} />
       </section>
     </>

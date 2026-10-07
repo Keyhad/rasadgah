@@ -15,7 +15,7 @@ Guidance for AI agents and human contributors working in this repository. Read t
 
 ## 1. Project Summary
 
-Rasadgah is a KPI monitoring web application (Next.js, TypeScript) served over HTTPS behind Caddy and deployed with Docker Compose. A visitor receives an access token, uploads a KPI JSON file with it, and views the rendered KPIs at `/?token=<token>`. A token expires one week after its last upload.
+Rasadgah is a KPI monitoring web application (Next.js, TypeScript) served over HTTPS behind Caddy and deployed with Docker Compose. A visitor receives a write token and a read token, uploads a KPI JSON file with the write token, and shares `/?token=<read token>`, which shows only the KPIs and their freshness. Both tokens expire one week after the last upload.
 
 The authoritative project description is [PRJ-001 Project Overview](docs/00-project/README.md).
 

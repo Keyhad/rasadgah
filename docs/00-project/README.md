@@ -32,21 +32,21 @@ Rasadgah ("observatory" in Persian) is a web application that renders key perfor
 
 ## 1. Purpose
 
-Teams need to share a small set of KPIs without operating a dashboard platform or managing user accounts. Rasadgah gives each visitor an access token, accepts a KPI file for that token and renders it as a dashboard at a stable URL.
+Teams need to share a small set of KPIs without operating a dashboard platform or managing user accounts. Rasadgah gives each visitor a write token to upload a KPI file and a read token to share it, and renders the KPIs as a dashboard at a stable URL.
 
 ## 2. Scope
 
-- Issuing anonymous access tokens.
+- Issuing anonymous write and read tokens.
 - Uploading and validating KPI files through the browser or an HTTP API.
-- Rendering KPIs with value, change, trend and target status.
-- Expiring tokens one week after the last upload and deleting their data.
+- Rendering KPIs with value, change, trend and target status, in an editor (write token) and a clean shared view with a freshness timestamp (read token).
+- Expiring both tokens one week after the last upload and deleting their data.
 - HTTPS delivery and deployment as a Docker Compose stack.
 
 ## 3. Out of Scope
 
 - User accounts, login, password recovery or token recovery.
 - Historical KPI series and charts. Each upload replaces the previous report.
-- Sharing one dashboard between tokens or granting read-only access.
+- More than one read token per dashboard, or revoking a read token independently.
 - Horizontal scaling across multiple application instances (see [ADR-002](../03-design/adr/adr-002-file-based-session-storage.md)).
 
 ## 4. System Overview
@@ -59,15 +59,17 @@ graph LR
     App --> Volume[(Session files)]
 ```
 
-A visitor who opens `/` without a token receives a new token. Uploading a KPI file with that token stores the report. Opening `/?token=<token>` renders the stored report.
+A visitor who opens `/` without a token receives a write token and a read token. Uploading a KPI file with the write token stores the report. Opening `/?token=<write token>` shows the editor; opening `/?token=<read token>` shows only the KPIs and how fresh they are.
 
 ## 5. Key Features
 
-- Token issued on first visit, with copy-to-clipboard and a dashboard link.
+- Write and read tokens issued on first visit, with copy-to-clipboard and links.
+- Share link for read-only viewers; only the write token can upload.
 - KPI upload from the browser or with `curl` (`PUT /api/kpis`).
 - Validation with field-level error messages.
 - KPI cards with formatted value, change versus previous value, trend and target status.
-- Sliding seven-day token lifetime.
+- Freshness line ("Updated 3 hours ago") on the shared view.
+- Sliding seven-day lifetime shared by both tokens, extended only by uploads.
 - Automatic HTTPS through Caddy, including Let's Encrypt certificates.
 - Single-command deployment with Docker Compose and a GitHub Actions pipeline.
 
@@ -85,8 +87,8 @@ Version 0.1.0. All requirements in REQ-000 are implemented and covered by the te
 
 ## 9. Known Limitations
 
-- A lost token cannot be recovered. The data becomes unreachable and is deleted when the token expires.
-- Anyone who has a token can read and replace that token's report.
+- A lost write token cannot be recovered. The data can still be viewed with the read token but no longer updated, and it is deleted when the tokens expire.
+- Anyone who has the write token can replace the report; anyone who has the read token can view it. A read token cannot be revoked without abandoning the dashboard.
 - The rate limiter keeps state in memory and resets when the application restarts.
 - Only one application instance is supported because sessions are stored on a local volume.
 

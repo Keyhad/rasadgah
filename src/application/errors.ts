@@ -1,4 +1,4 @@
-export type AppErrorCode = 'TOKEN_INVALID' | 'REPORT_INVALID';
+export type AppErrorCode = 'TOKEN_INVALID' | 'TOKEN_READ_ONLY' | 'REPORT_INVALID';
 
 export class AppError extends Error {
   constructor(

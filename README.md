@@ -2,11 +2,11 @@
 
 Lightweight web application for monitoring KPIs.
 
-1. Open the site without a token: a unique **access token** is issued. Save it.
-2. Upload a KPI JSON file with that token.
-3. Revisit `/?token=<token>` to see your KPIs rendered.
+1. Open the site without a token: a **write token** and a **read token** are issued. Save both.
+2. Upload a KPI JSON file with the write token; `/?token=<write token>` is your editor.
+3. Share `/?token=<read token>`: it shows only your KPIs and how fresh they are.
 
-A token expires **one week after the last upload** (or after issuance if nothing was uploaded). Expired tokens and their data are deleted; open `/` to get a new one.
+Both tokens expire **one week after the last upload** (or after issuance if nothing was uploaded). Only uploads extend them. Expired tokens and their data are deleted; open `/` to get new ones.
 
 ## Quick start
 

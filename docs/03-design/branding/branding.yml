@@ -7,7 +7,7 @@ identity:
   meaning: "Persian رصدگاه, 'observatory'"
   tagline: "KPI observatory"
   slogan: "Observe what matters."
-  description: "Upload a KPI file with a personal access token and view it as a dashboard over HTTPS. No account required."
+  description: "Upload KPIs with a private write token and share a clean, read-only dashboard over HTTPS. No account required."
   tags:
     - KPI
     - Dashboard

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatChange, formatDateTime, formatValue } from './format';
+import { formatAge, formatChange, formatDateTime, formatValue } from './format';
 
 describe('formatValue', () => {
   it('formats plain numbers', () => {
@@ -36,5 +36,21 @@ describe('formatChange', () => {
 describe('formatDateTime', () => {
   it('formats in UTC', () => {
     expect(formatDateTime('2026-10-07T08:30:00Z')).toBe('Oct 7, 2026, 8:30 AM UTC');
+  });
+});
+
+describe('formatAge', () => {
+  const now = new Date('2026-10-07T12:00:00Z');
+  it.each([
+    ['2026-10-07T12:00:00Z', 'just now'],
+    ['2026-10-07T11:59:30Z', 'just now'],
+    ['2026-10-07T13:00:00Z', 'just now'],
+    ['2026-10-07T11:55:00Z', '5 minutes ago'],
+    ['2026-10-07T11:00:00Z', '1 hour ago'],
+    ['2026-10-07T09:00:00Z', '3 hours ago'],
+    ['2026-10-06T12:00:00Z', 'yesterday'],
+    ['2026-10-01T12:00:00Z', '6 days ago'],
+  ])('%s is %s', (iso, expected) => {
+    expect(formatAge(iso, now)).toBe(expected);
   });
 });

@@ -4,6 +4,9 @@ export const TOKEN_LIFETIME_MS = 7 * 24 * 60 * 60 * 1000;
 
 const TOKEN_PATTERN = /^[A-Za-z0-9_-]{32}$/;
 
+/** `write` tokens may upload; `read` tokens may only view. */
+export type Access = 'read' | 'write';
+
 /** State attached to an access token; the token itself is never part of the record. */
 export interface Session {
   readonly createdAt: string;

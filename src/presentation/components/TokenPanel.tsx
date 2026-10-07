@@ -1,37 +1,29 @@
-'use client';
+import { CopyField } from './CopyField';
 
-import { useState } from 'react';
-
-export function TokenPanel({ token, expiresAt }: { token: string; expiresAt: string }) {
-  const [copied, setCopied] = useState(false);
-  const dashboardUrl = `/?token=${encodeURIComponent(token)}`;
-
-  async function copy() {
-    try {
-      await navigator.clipboard.writeText(token);
-      setCopied(true);
-    } catch {
-      setCopied(false);
-    }
-  }
-
+export function TokenPanel({
+  writeToken,
+  readToken,
+  expiresAt,
+}: {
+  writeToken: string;
+  readToken: string;
+  expiresAt: string;
+}) {
   return (
     <section className="panel" aria-labelledby="token-heading">
-      <h2 id="token-heading">Your access token</h2>
+      <h2 id="token-heading">Your tokens</h2>
+      <p>Save both tokens now. They cannot be recovered.</p>
+      <CopyField label="Write token" value={writeToken} testId="write-token" />
+      <p className="hint">Keep it secret. It uploads KPIs and opens the editor.</p>
+      <CopyField label="Read token" value={readToken} testId="read-token" />
+      <p className="hint">Share it. It shows your KPIs read-only.</p>
       <p>
-        Save this token. It is the only way to access your dashboard and it cannot be recovered.
+        Both expire <strong>{expiresAt}</strong>. Every upload with the write token extends them by one
+        week.
       </p>
-      <div className="token">
-        <code data-testid="token">{token}</code>
-        <button type="button" onClick={copy}>
-          {copied ? 'Copied' : 'Copy'}
-        </button>
-      </div>
-      <p>
-        Expires <strong>{expiresAt}</strong> unless you upload KPIs, which extends it by one week.
-      </p>
-      <p>
-        <a href={dashboardUrl}>Open my dashboard</a>
+      <p className="links">
+        <a href={`/?token=${writeToken}`}>Open editor</a>
+        <a href={`/?token=${readToken}`}>Open shared view</a>
       </p>
     </section>
   );

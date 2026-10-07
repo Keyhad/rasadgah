@@ -43,3 +43,19 @@ export function formatDateTime(iso: string): string {
   }).format(new Date(iso));
   return `${formatted} UTC`;
 }
+
+const AGE_UNITS: readonly [Intl.RelativeTimeFormatUnit, number][] = [
+  ['day', 86_400],
+  ['hour', 3_600],
+  ['minute', 60],
+];
+
+/** Human-readable age of `iso` relative to `now`, e.g. "3 hours ago". */
+export function formatAge(iso: string, now: Date): string {
+  const seconds = Math.max(0, (now.getTime() - Date.parse(iso)) / 1000);
+  const rtf = new Intl.RelativeTimeFormat(LOCALE, { numeric: 'auto' });
+  for (const [unit, size] of AGE_UNITS) {
+    if (seconds >= size) return rtf.format(-Math.floor(seconds / size), unit);
+  }
+  return 'just now';
+}

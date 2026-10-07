@@ -10,6 +10,16 @@ describe('cryptoTokenGenerator', () => {
     expect(tokens.size).toBe(100);
     for (const token of tokens) expect(token).toMatch(/^[A-Za-z0-9_-]{32}$/);
   });
+
+  it('derives a stable, well-formed read token that differs from the write token', () => {
+    const write = cryptoTokenGenerator.generate();
+    const read = cryptoTokenGenerator.readTokenFor(write);
+    expect(read).toMatch(/^[A-Za-z0-9_-]{32}$/);
+    expect(read).not.toBe(write);
+    expect(cryptoTokenGenerator.readTokenFor(write)).toBe(read);
+    expect(cryptoTokenGenerator.readTokenFor(read)).not.toBe(read);
+    expect(cryptoTokenGenerator.readTokenFor('a'.repeat(32))).toBe('CwHdw8pvuu8vUj9sM5-tFjqJnY_Gtv0q');
+  });
 });
 
 describe('systemClock', () => {

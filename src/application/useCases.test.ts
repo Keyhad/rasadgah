@@ -5,13 +5,18 @@ import { AppError, isAppError } from './errors';
 import {
   createGetDashboard,
   createGetReport,
-  createIssueToken,
+  createIssueTokens,
   createUploadReport,
   type Deps,
 } from './useCases';
 
-const TOKEN = 'T'.repeat(32);
+const WRITE = 'W'.repeat(32);
+// The fake derivation has no fixed point, like SHA-256: readTokenFor(READ) !== READ.
+const readTokenFor = (token: string) => `r${token.slice(0, 31)}`;
+const READ = readTokenFor(WRITE);
+
 const report = {
+  generatedAt: '2026-09-30T18:00:00Z',
   kpis: [
     { id: 'rev', label: 'Revenue', value: 120, previousValue: 100, target: 110, unit: 'currency' },
     { id: 'lat', label: 'Latency', value: 300, unit: 'duration_ms', direction: 'lower_is_better', target: 250 },
@@ -22,13 +27,17 @@ const report = {
 function setup() {
   let now = new Date('2026-10-01T00:00:00Z');
   const store = createMemorySessionStore();
-  const deps: Deps = { store, tokens: { generate: () => TOKEN }, clock: { now: () => now } };
+  const deps: Deps = {
+    store,
+    tokens: { generate: () => WRITE, readTokenFor },
+    clock: { now: () => now },
+  };
   return {
     store,
     advance: (ms: number) => {
       now = new Date(now.getTime() + ms);
     },
-    issueToken: createIssueToken(deps),
+    issueTokens: createIssueTokens(deps),
     uploadReport: createUploadReport(deps),
     getReport: createGetReport(deps),
     getDashboard: createGetDashboard(deps),
@@ -58,65 +67,100 @@ describe('use cases', () => {
     app = setup();
   });
 
-  it('issues a token that expires in one week', async () => {
-    await expect(app.issueToken()).resolves.toEqual({
-      token: TOKEN,
+  it('issues a write and a read token that expire in one week', async () => {
+    await expect(app.issueTokens()).resolves.toEqual({
+      writeToken: WRITE,
+      readToken: READ,
       expiresAt: '2026-10-08T00:00:00.000Z',
     });
     expect(app.store.size).toBe(1);
+    expect(await app.store.find(READ)).not.toBeNull();
   });
 
-  it('returns an empty report for a fresh token', async () => {
-    await app.issueToken();
-    await expect(app.getReport(TOKEN)).resolves.toEqual({
+  it('resolves the access level of each token', async () => {
+    await app.issueTokens();
+    await expect(app.getReport(WRITE)).resolves.toEqual({
+      access: 'write',
       report: null,
       updatedAt: null,
       expiresAt: '2026-10-08T00:00:00.000Z',
     });
+    await expect(app.getReport(READ)).resolves.toMatchObject({ access: 'read', report: null });
   });
 
-  it('stores an uploaded report and extends the lifetime', async () => {
-    await app.issueToken();
+  it('uploads with the write token and extends both tokens', async () => {
+    await app.issueTokens();
     app.advance(TOKEN_LIFETIME_MS - 1);
-    const stored = await app.uploadReport(TOKEN, report);
+    const stored = await app.uploadReport(WRITE, report);
     expect(stored.report?.kpis).toHaveLength(3);
     expect(stored.updatedAt).toBe('2026-10-07T23:59:59.999Z');
     expect(stored.expiresAt).toBe('2026-10-14T23:59:59.999Z');
 
     app.advance(TOKEN_LIFETIME_MS - 1);
-    await expect(app.getReport(TOKEN)).resolves.toMatchObject({ updatedAt: stored.updatedAt });
+    await expect(app.getReport(READ)).resolves.toMatchObject({
+      access: 'read',
+      updatedAt: stored.updatedAt,
+    });
+  });
+
+  it('refuses uploads with the read token and leaves the lifetime unchanged', async () => {
+    await app.issueTokens();
+    app.advance(1000);
+    await expectAppError(app.uploadReport(READ, report), 'TOKEN_READ_ONLY');
+    await expect(app.getReport(WRITE)).resolves.toMatchObject({
+      report: null,
+      expiresAt: '2026-10-08T00:00:00.000Z',
+    });
+  });
+
+  it('checks the token before the payload', async () => {
+    await app.issueTokens();
+    await expectAppError(app.uploadReport(READ, 'not a report'), 'TOKEN_READ_ONLY');
   });
 
   it('rejects invalid reports with readable details', async () => {
-    await app.issueToken();
-    const promise = app.uploadReport(TOKEN, { kpis: [{ id: 'x' }] });
+    await app.issueTokens();
+    const promise = app.uploadReport(WRITE, { kpis: [{ id: 'x' }] });
     await expectAppError(promise, 'REPORT_INVALID');
     const error = (await promise.catch((e: unknown) => e)) as AppError;
     expect(error.details).toEqual(expect.arrayContaining([expect.stringMatching(/^kpis\.0\.label: /)]));
 
-    const rootError = (await app.uploadReport(TOKEN, 'nope').catch((e: unknown) => e)) as AppError;
+    const rootError = (await app.uploadReport(WRITE, 'nope').catch((e: unknown) => e)) as AppError;
     expect(rootError.details[0]).toMatch(/^\(root\): /);
   });
 
   it.each([undefined, 'malformed', 'U'.repeat(32)])('rejects unknown token %s', async (token) => {
+    await app.issueTokens();
     await expectAppError(app.getReport(token), 'TOKEN_INVALID');
     await expectAppError(app.uploadReport(token, report), 'TOKEN_INVALID');
     await expectAppError(app.getDashboard(token), 'TOKEN_INVALID');
   });
 
-  it('expires idle tokens and deletes their data', async () => {
-    await app.issueToken();
+  it.each([
+    ['write', WRITE],
+    ['read', READ],
+  ])('expires idle dashboards via the %s token and deletes the data', async (_, token) => {
+    await app.issueTokens();
     app.advance(TOKEN_LIFETIME_MS);
-    await expectAppError(app.getDashboard(TOKEN), 'TOKEN_INVALID');
+    await expectAppError(app.getDashboard(token), 'TOKEN_INVALID');
     expect(app.store.size).toBe(0);
+    await expectAppError(app.getDashboard(token === WRITE ? READ : WRITE), 'TOKEN_INVALID');
   });
 
-  it('builds a dashboard view model', async () => {
-    await app.issueToken();
-    await app.uploadReport(TOKEN, report);
-    const dashboard = await app.getDashboard(TOKEN);
+  it('builds the editor view model for the write token', async () => {
+    await app.issueTokens();
+    await app.uploadReport(WRITE, report);
+    app.advance(3 * 60 * 60 * 1000);
+    const dashboard = await app.getDashboard(WRITE);
     expect(dashboard).toMatchObject({
-      updatedAt: 'Oct 1, 2026, 12:00 AM UTC',
+      access: 'write',
+      readToken: READ,
+      updated: {
+        iso: '2026-10-01T00:00:00.000Z',
+        label: 'Oct 1, 2026, 12:00 AM UTC',
+        age: '3 hours ago',
+      },
+      dataAsOf: 'Sep 30, 2026, 6:00 PM UTC',
       expiresAt: 'Oct 8, 2026, 12:00 AM UTC',
       summary: { total: 3, withTarget: 2, onTarget: 1 },
     });
@@ -133,12 +177,17 @@ describe('use cases', () => {
     expect(dashboard.kpis[2]).toMatchObject({ change: '—', target: null, targetStatus: 'none' });
   });
 
-  it('builds an empty dashboard before the first upload', async () => {
-    await app.issueToken();
-    await expect(app.getDashboard(TOKEN)).resolves.toMatchObject({
-      updatedAt: null,
+  it('hides the read token from read-token holders and omits missing timestamps', async () => {
+    await app.issueTokens();
+    await expect(app.getDashboard(READ)).resolves.toMatchObject({
+      access: 'read',
+      readToken: null,
+      updated: null,
+      dataAsOf: null,
       kpis: [],
       summary: { total: 0, withTarget: 0, onTarget: 0 },
     });
+    await app.uploadReport(WRITE, { kpis: [] });
+    await expect(app.getDashboard(READ)).resolves.toMatchObject({ dataAsOf: null, updated: { age: 'just now' } });
   });
 });

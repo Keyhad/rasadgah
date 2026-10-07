@@ -3,7 +3,7 @@ id: USR-001
 title: User Guide
 type: user-guide
 status: proposed
-version: 1.0
+version: 1.1
 audience:
   - user
 tags:
@@ -21,8 +21,9 @@ tags:
 - [5. Basic Operation](#5-basic-operation)
   - [5.1 Prepare a KPI file](#51-prepare-a-kpi-file)
   - [5.2 Upload KPIs](#52-upload-kpis)
-  - [5.3 View the dashboard](#53-view-the-dashboard)
+  - [5.3 Use the editor](#53-use-the-editor)
   - [5.4 Update KPIs](#54-update-kpis)
+  - [5.5 Share your KPIs](#55-share-your-kpis)
 - [6. Reading a KPI Card](#6-reading-a-kpi-card)
 - [7. Token Lifetime](#7-token-lifetime)
 - [8. Advanced Usage: Uploading from Scripts](#8-advanced-usage-uploading-from-scripts)
@@ -32,11 +33,11 @@ tags:
 
 ## 1. Introduction
 
-Rasadgah shows your key performance indicators as a dashboard. You receive a personal access token, upload a JSON file with your KPIs, and open your dashboard with the token.
+Rasadgah shows your key performance indicators as a dashboard. You receive two tokens: a **write token** to upload your KPIs and a **read token** to share them. People with the read token see a clean page with only your KPIs and how fresh they are.
 
 ## 2. Intended Users
 
-People who publish KPIs for themselves or a team, manually or from an automated job.
+People who publish KPIs for themselves or a team, manually or from an automated job, and the people they share them with.
 
 ## 3. Prerequisites
 
@@ -46,9 +47,16 @@ People who publish KPIs for themselves or a team, manually or from an automated 
 ## 4. Getting Started
 
 1. Open the site address without any parameters, for example `https://kpi.example.com/`.
-2. The page shows **Your access token**. Select **Copy** and store the token in a password manager.
+2. The page shows **Your tokens**:
 
-The token is the only key to your dashboard. It cannot be recovered and it is not linked to any account.
+   | Token       | Purpose                           | Keep it                     |
+   | ----------- | --------------------------------- | --------------------------- |
+   | Write token | Uploads KPIs and opens the editor | Secret, like a password     |
+   | Read token  | Shows your KPIs read-only         | Share it with your audience |
+
+3. Select **Copy** next to each token and store both in a password manager.
+
+The tokens cannot be recovered and are not linked to any account.
 
 ## 5. Basic Operation
 
@@ -60,23 +68,31 @@ Download the example from the start page (**download an example**) or use [publi
 
 1. Under **Upload KPIs**, select **Choose file** and pick your JSON file.
 2. Select **Upload**.
-3. On success the dashboard opens. If the file is invalid, the page lists each problem, for example `kpis.0.unit: …`. Correct the file and upload again.
+3. On success the editor opens. If the file is invalid, the page lists each problem, for example `kpis.0.unit: …`. Correct the file and upload again.
 
-### 5.3 View the dashboard
+### 5.3 Use the editor
 
-Open `https://<site>/?token=<your token>`, or select **Open my dashboard** on the start page. Bookmark this URL only on a private device, because the URL contains your token.
+Open `https://<site>/?token=<write token>`, or select **Open editor** on the start page. Bookmark this URL only on a private device, because it contains your write token.
 
-The header shows:
+The status panel shows:
 
 | Field         | Meaning                                               |
 | ------------- | ----------------------------------------------------- |
-| Last upload   | Time of the last successful upload (UTC)              |
-| Token expires | Time after which the token stops working (UTC)        |
+| Last upload   | Time of the last successful upload (UTC) and its age  |
+| Tokens expire | Time after which both tokens stop working (UTC)       |
 | On target     | KPIs that meet their target / KPIs that have a target |
+| Share link    | Read-only link to send to others (see Section 5.5)    |
 
 ### 5.4 Update KPIs
 
-Upload a new file under **Update KPIs** on the dashboard. The new file replaces all previous KPIs and extends the token lifetime by one week from now.
+Upload a new file under **Update KPIs** in the editor. The new file replaces all previous KPIs and extends the lifetime of both tokens by one week from now.
+
+### 5.5 Share your KPIs
+
+1. In the editor, select **Copy** next to **Share link (read-only)**, or copy the read token from the start page.
+2. Send the link `https://<site>/?token=<read token>`.
+
+Viewers see only the KPI cards and a line such as "Updated 3 hours ago (Oct 7, 2026, 9:00 AM UTC)". If your file contains `generatedAt`, the line also shows "data as of …". Viewers cannot upload, cannot see your write token and do not extend the lifetime.
 
 ## 6. Reading a KPI Card
 
@@ -92,18 +108,18 @@ Formatting rules: [INT-001, Section 4](../02-specification/kpi-file-format.md#4-
 
 ## 7. Token Lifetime
 
-A token expires 7 days after the last upload. A token that never received an upload expires 7 days after it was issued. After expiry, the token and its KPIs are deleted. Open the start page to get a new token.
+Both tokens expire together, 7 days after the last upload with the write token. If nothing was ever uploaded, they expire 7 days after they were issued. Viewing does not extend the lifetime. After expiry, the tokens and the KPIs are deleted. Open the start page to get new tokens.
 
 ## 8. Advanced Usage: Uploading from Scripts
 
 ```bash
 curl -fsS -X PUT "https://<site>/api/kpis" \
-  -H "Authorization: Bearer $RASADGAH_TOKEN" \
+  -H "Authorization: Bearer $RASADGAH_WRITE_TOKEN" \
   -H 'Content-Type: application/json' \
   --data-binary '@kpis.json'
 ```
 
-Run this at least once a week, for example from a scheduled CI job, to keep the token alive. Full API: [API-001](../02-specification/api-specification.md).
+Run this at least once a week, for example from a scheduled CI job, to keep both tokens alive. Store the write token as a CI secret. Full API: [API-001](../02-specification/api-specification.md).
 
 ## 9. Troubleshooting
 
@@ -133,7 +149,15 @@ Run this at least once a week, for example from a scheduled CI job, to keep the 
 
 **Cause:** Too many tokens were requested from your network within one hour.
 
-**Solution:** Wait up to one hour, or reuse an existing token.
+**Solution:** Wait up to one hour, or reuse existing tokens.
+
+### 9.5 "This is a read token"
+
+**Symptom:** An upload with `curl` returns HTTP 403.
+
+**Cause:** The read token was used instead of the write token.
+
+**Solution:** Use the write token for uploads.
 
 More: [REF-002 Troubleshooting](../07-reference/troubleshooting.md).
 
@@ -141,13 +165,17 @@ More: [REF-002 Troubleshooting](../07-reference/troubleshooting.md).
 
 ### 10.1 Can I recover a lost token?
 
-No. Request a new token and upload your file again.
+No. If you lost the write token, viewers can still use the read token until the dashboard expires, but you cannot update it. Request new tokens and upload your file again.
 
 ### 10.2 Can I share my dashboard?
 
-Sharing the URL also shares the ability to replace your KPIs. Share it only with people you trust.
+Yes. Share the read token or the share link from the editor. Never share the write token.
 
-### 10.3 Is history kept?
+### 10.3 Can I revoke a shared link?
+
+Not individually. Stop uploading so that the dashboard expires within 7 days, and create a new dashboard for the people who should keep access.
+
+### 10.4 Is history kept?
 
 No. Each upload replaces the previous one. Use `previousValue` to show change.
 

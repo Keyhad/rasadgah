@@ -1,9 +1,9 @@
-import { isAppError } from '@/application/errors';
-import type { IssuedToken, StoredReport } from '@/application/useCases';
+import { isAppError, type AppErrorCode } from '@/application/errors';
+import type { IssuedTokens, StoredReport } from '@/application/useCases';
 import type { RateLimiter } from '@/infrastructure/rateLimiter';
 
 export interface HttpDeps {
-  issueToken(): Promise<IssuedToken>;
+  issueTokens(): Promise<IssuedTokens>;
   uploadReport(token: unknown, payload: unknown): Promise<StoredReport>;
   getReport(token: unknown): Promise<StoredReport>;
   tokenRateLimiter: RateLimiter;
@@ -30,10 +30,15 @@ export function bearerToken(headers: Headers): string | null {
   return match?.[1] ?? null;
 }
 
+const STATUS_BY_CODE: Record<AppErrorCode, number> = {
+  TOKEN_INVALID: 401,
+  TOKEN_READ_ONLY: 403,
+  REPORT_INVALID: 422,
+};
+
 function handleError(error: unknown): Response {
   if (isAppError(error)) {
-    const status = error.code === 'TOKEN_INVALID' ? 401 : 422;
-    return problem(status, error.message, error.details);
+    return problem(STATUS_BY_CODE[error.code], error.message, error.details);
   }
   console.error(error);
   return problem(500, 'Unexpected server error.');
@@ -46,7 +51,7 @@ export function createTokenHandlers(deps: HttpDeps) {
         return problem(429, 'Too many tokens requested. Try again later.');
       }
       try {
-        return json(await deps.issueToken(), 201);
+        return json(await deps.issueTokens(), 201);
       } catch (error) {
         return handleError(error);
       }

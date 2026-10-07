@@ -96,7 +96,7 @@ Purpose: use cases and the contracts they need.
 
 Responsibilities:
 
-- `useCases.ts` — `issueToken`, `uploadReport`, `getReport`, `getDashboard` and the dashboard view model.
+- `useCases.ts` — `issueTokens`, `uploadReport`, `getReport`, `getDashboard`, token resolution to `write`/`read` access, and the dashboard view model.
 - `ports.ts` — `SessionStore`, `TokenGenerator`, `Clock` interfaces.
 - `kpiReportSchema.ts` — validation of [INT-001](../02-specification/kpi-file-format.md).
 - `errors.ts` — `AppError` and `isAppError`.
@@ -123,7 +123,7 @@ Purpose: translate between HTTP/React and use cases.
 Responsibilities:
 
 - `http/handlers.ts` — framework-independent `Request → Response` handlers for the API (API-001).
-- `components/` — `DashboardView`, `KpiCard`, `TokenPanel`, `UploadForm` (client), `Notice`.
+- `components/` — `DashboardView` (editor, write token), `SharedDashboardView` (read token), `KpiGrid`, `KpiCard`, `Freshness`, `TokenPanel`, `CopyField` (client), `UploadForm` (client), `Notice`.
 
 Dependencies: application. Receives use cases as arguments; never imports the composition root.
 
@@ -207,7 +207,7 @@ The [Dockerfile](../../Dockerfile) defines the stages `deps`, `source`, `dev`, `
 
 - Static export without a server — rejected because tokens and uploads require server state ([ADR-001](adr/adr-001-nextjs-standalone-server.md)).
 - Database storage — deferred ([ADR-002](adr/adr-002-file-based-session-storage.md)).
-- User accounts — rejected ([ADR-004](adr/adr-004-anonymous-bearer-tokens.md)).
+- User accounts — rejected ([ADR-004](adr/adr-004-anonymous-bearer-tokens.md)); read/write separation through tokens instead ([ADR-005](adr/adr-005-read-and-write-tokens.md)).
 
 ## 13. Related Requirements
 

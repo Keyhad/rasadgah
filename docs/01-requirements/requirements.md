@@ -3,7 +3,7 @@ id: REQ-000
 title: System Requirements
 type: requirement
 status: proposed
-version: 1.0
+version: 1.1
 owner: engineering
 audience:
   - architect
@@ -30,6 +30,8 @@ tags:
   - [2.6 REQ-006 Expired or unknown token](#26-req-006-expired-or-unknown-token)
   - [2.7 REQ-007 Programmatic access](#27-req-007-programmatic-access)
   - [2.8 REQ-008 Data deletion](#28-req-008-data-deletion)
+  - [2.9 REQ-009 Shared read-only view](#29-req-009-shared-read-only-view)
+  - [2.10 REQ-010 Write-token privileges](#210-req-010-write-token-privileges)
 - [3. Non-Functional Requirements](#3-non-functional-requirements)
   - [3.1 NFR-001 Encrypted transport](#31-nfr-001-encrypted-transport)
   - [3.2 NFR-002 Token secrecy](#32-nfr-002-token-secrecy)
@@ -57,9 +59,12 @@ The requirements cover the web application, its HTTP API and its deployment. The
 
 | Term          | Definition                                                                              |
 | ------------- | --------------------------------------------------------------------------------------- |
-| Token         | Opaque secret string that identifies one dashboard.                                     |
+| Dashboard     | One stored set of KPIs, reachable with exactly one write token and one read token.      |
+| Write token   | Secret string that allows uploading KPIs and opening the editor of one dashboard.       |
+| Read token    | Secret string, intended for sharing, that allows only viewing one dashboard.            |
+| Token         | A write token or a read token.                                                          |
 | Report        | The validated content of one uploaded KPI file.                                         |
-| Session       | The stored state of a token: creation time, last upload time and report.                |
+| Session       | The stored state of a dashboard: creation time, last upload time and report.            |
 | Last activity | The time of the last successful upload, or the issuance time if no upload has occurred. |
 
 ## 2. Functional Requirements
@@ -68,23 +73,23 @@ The requirements cover the web application, its HTTP API and its deployment. The
 
 #### 2.1.1 Requirement
 
-When a visitor opens the start page without a `token` query parameter, the system shall issue a new token and display it together with its expiry time and an upload form.
+When a visitor opens the start page without a `token` query parameter, the system shall create a new dashboard and display its write token, its read token, their common expiry time and an upload form.
 
 #### 2.1.2 Acceptance Criteria
 
-- [x] The start page displays a token of 32 URL-safe characters.
+- [x] The start page displays a write token and a read token, each of 32 URL-safe characters, and they differ.
 - [x] Two consecutive visits to the start page display different tokens.
-- [x] The page states that the token must be saved and cannot be recovered.
+- [x] The page states that the tokens must be saved and cannot be recovered, that the write token shall be kept secret and that the read token is for sharing.
 
 ### 2.2 REQ-002 KPI upload
 
 #### 2.2.1 Requirement
 
-The system shall accept a KPI file for a valid token and replace any previously stored report for that token.
+The system shall accept a KPI file presented with a valid write token and replace any previously stored report of that dashboard.
 
 #### 2.2.2 Acceptance Criteria
 
-- [x] After a successful upload in the browser, the dashboard for the token is displayed.
+- [x] After a successful upload in the browser, the editor for the write token is displayed.
 - [x] A second upload replaces the first report.
 
 ### 2.3 REQ-003 KPI validation
@@ -102,24 +107,26 @@ The system shall reject a KPI file that does not conform to [INT-001](../02-spec
 
 #### 2.4.1 Requirement
 
-When a visitor opens `/?token=<token>` with a valid token, the system shall render one card per KPI showing the label, the formatted value, the change relative to the previous value, the trend and the target status. The page shall show the time of the last upload and the token expiry time.
+When a visitor opens `/?token=<write token>`, the system shall render the editor: one card per KPI showing the label, the formatted value, the change relative to the previous value, the trend and the target status; the time of the last upload; the expiry time; the share link containing the read token; and the upload form.
 
 #### 2.4.2 Acceptance Criteria
 
 - [x] Every KPI in the report is rendered as one card.
 - [x] Values are formatted according to their unit (INT-001, Section 4).
-- [x] A token without a report shows an empty state and the upload form.
+- [x] A dashboard without a report shows an empty state and the upload form.
+- [x] The share link opens the read-only view of the same dashboard.
 
 ### 2.5 REQ-005 Token lifetime
 
 #### 2.5.1 Requirement
 
-A token shall expire 7 days (604 800 seconds) after its last activity. Each successful upload shall restart this period.
+The write token and the read token of a dashboard shall share one expiry time, 7 days (604 800 seconds) after the last activity. Only a successful upload with the write token shall restart this period; viewing with either token shall not.
 
 #### 2.5.2 Acceptance Criteria
 
-- [x] A token without uploads is rejected 7 days after issuance.
-- [x] A token that receives an upload 1 second before expiry remains valid for another 7 days.
+- [x] A dashboard without uploads is rejected through both tokens 7 days after issuance.
+- [x] A dashboard that receives an upload 1 second before expiry remains valid for another 7 days through both tokens.
+- [x] A rejected upload with the read token does not change the expiry time.
 
 ### 2.6 REQ-006 Expired or unknown token
 
@@ -140,18 +147,41 @@ The system shall provide an HTTP API to issue a token, upload a report and read 
 
 #### 2.7.2 Acceptance Criteria
 
-- [x] A token issued with `POST /api/tokens` can upload with `PUT /api/kpis` and read with `GET /api/kpis`.
+- [x] A write token issued with `POST /api/tokens` can upload with `PUT /api/kpis`; both tokens can read with `GET /api/kpis`.
 
 ### 2.8 REQ-008 Data deletion
 
 #### 2.8.1 Requirement
 
-The system shall delete the session of an expired token no later than 1 hour after expiry while the application is running, and immediately when the expired token is presented.
+The system shall delete the session of an expired dashboard no later than 1 hour after expiry while the application is running, and immediately when either of its tokens is presented.
 
 #### 2.8.2 Acceptance Criteria
 
-- [x] Presenting an expired token deletes its session.
+- [x] Presenting an expired write or read token deletes the session.
 - [x] The periodic purge deletes expired sessions and keeps valid ones.
+
+### 2.9 REQ-009 Shared read-only view
+
+#### 2.9.1 Requirement
+
+When a visitor opens `/?token=<read token>`, the system shall render only the KPI cards and a freshness line stating how long ago and at what time (UTC) the KPIs were last uploaded, and the `generatedAt` time of the KPI file when present. The view must not contain the write token, the expiry time, an upload form or other controls.
+
+#### 2.9.2 Acceptance Criteria
+
+- [x] The view shows every KPI card and the text "Updated <age> (<UTC time>)".
+- [x] The view contains no buttons, no file input and no write token.
+- [x] Before the first upload the view states "No KPIs published yet."
+
+### 2.10 REQ-010 Write-token privileges
+
+#### 2.10.1 Requirement
+
+Only the write token shall allow uploading KPIs, opening the editor and seeing the read token. An upload presented with a read token shall be rejected without changing the dashboard. The write token must not be derivable from the read token.
+
+#### 2.10.2 Acceptance Criteria
+
+- [x] `PUT /api/kpis` with a read token returns HTTP 403.
+- [x] Opening `/?token=<read token>` renders the shared view, not the editor.
 
 ## 3. Non-Functional Requirements
 
@@ -170,12 +200,12 @@ All production traffic shall be served over HTTPS. HTTP requests shall be redire
 
 #### 3.2.1 Requirement
 
-Tokens shall contain at least 128 bits of entropy from a cryptographically secure source. Raw tokens must not be written to persistent storage or access logs, and must not be sent to third parties in the `Referer` header.
+Write tokens shall contain at least 128 bits of entropy from a cryptographically secure source. Read tokens shall be derived from write tokens by a one-way function and shall have the same length. Raw tokens must not be written to persistent storage or access logs, and must not be sent to third parties in the `Referer` header.
 
 #### 3.2.2 Acceptance Criteria
 
-- [x] Tokens carry 192 bits of entropy.
-- [x] Session files are named by the SHA-256 hash of the token and do not contain the token.
+- [x] Write tokens carry 192 bits of entropy; read tokens are 192-bit truncated SHA-256 values.
+- [x] Session files are named by the SHA-256 hash of the read token and contain neither token.
 - [x] The proxy access log replaces the `token` query value with `REDACTED` and omits the `Authorization` header.
 - [x] Every response carries `Referrer-Policy: no-referrer`.
 
@@ -224,11 +254,11 @@ Source code shall be organised in domain, application, infrastructure and presen
 ## 4. Constraints
 
 - The application shall run as a single instance (see [ADR-002](../03-design/adr/adr-002-file-based-session-storage.md)).
-- There are no user accounts (see [ADR-004](../03-design/adr/adr-004-anonymous-bearer-tokens.md)).
+- There are no user accounts (see [ADR-004](../03-design/adr/adr-004-anonymous-bearer-tokens.md) and [ADR-005](../03-design/adr/adr-005-read-and-write-tokens.md)).
 
 ## 5. Assumptions
 
-- Users store their token themselves.
+- Users store their tokens themselves.
 - The deployment host exposes ports 80 and 443 and has a DNS record for the site address.
 
 ## 6. Dependencies
@@ -248,8 +278,10 @@ Source code shall be organised in domain, application, infrastructure and presen
 | REQ-006     | DES-002           | TST-006          |
 | REQ-007     | API-001           | TST-007          |
 | REQ-008     | DES-002           | TST-008          |
+| REQ-009     | DES-012, ADR-005  | TST-015          |
+| REQ-010     | DES-002, ADR-005  | TST-016          |
 | NFR-001     | ADR-003           | TST-009          |
-| NFR-002     | DES-002, ADR-004  | TST-010          |
+| NFR-002     | DES-002, ADR-005  | TST-010          |
 | NFR-003     | API-001           | TST-011          |
 | NFR-004     | DES-001, PROC-002 | TST-012          |
 | NFR-005     | PROC-003          | TST-013          |

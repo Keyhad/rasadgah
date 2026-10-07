@@ -2,7 +2,7 @@ import path from 'node:path';
 import {
   createGetDashboard,
   createGetReport,
-  createIssueToken,
+  createIssueTokens,
   createUploadReport,
   type Deps,
 } from '@/application/useCases';
@@ -24,7 +24,7 @@ function buildContainer() {
     clock: systemClock,
   };
   return {
-    issueToken: createIssueToken(deps),
+    issueTokens: createIssueTokens(deps),
     uploadReport: createUploadReport(deps),
     getReport: createGetReport(deps),
     getDashboard: createGetDashboard(deps),

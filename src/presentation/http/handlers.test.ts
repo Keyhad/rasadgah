@@ -4,11 +4,18 @@ import type { StoredReport } from '@/application/useCases';
 import { bearerToken, clientIp, createKpiHandlers, createTokenHandlers, type HttpDeps } from './handlers';
 
 const TOKEN = 'T'.repeat(32);
-const stored: StoredReport = { report: { kpis: [] }, updatedAt: null, expiresAt: '2026-10-08T00:00:00.000Z' };
+const READ = 'R'.repeat(32);
+const stored: StoredReport = {
+  access: 'write',
+  report: { kpis: [] },
+  updatedAt: null,
+  expiresAt: '2026-10-08T00:00:00.000Z',
+};
+const issued = { writeToken: TOKEN, readToken: READ, expiresAt: stored.expiresAt };
 
 function deps(overrides: Partial<HttpDeps> = {}): HttpDeps {
   return {
-    issueToken: vi.fn(async () => ({ token: TOKEN, expiresAt: stored.expiresAt })),
+    issueTokens: vi.fn(async () => issued),
     uploadReport: vi.fn(async () => stored),
     getReport: vi.fn(async () => stored),
     tokenRateLimiter: { take: vi.fn(() => true) },
@@ -38,23 +45,23 @@ describe('header helpers', () => {
 });
 
 describe('POST /api/tokens', () => {
-  it('issues a token', async () => {
+  it('issues a write and a read token', async () => {
     const response = await createTokenHandlers(deps()).POST(new Request('http://test', { method: 'POST' }));
     expect(response.status).toBe(201);
     expect(response.headers.get('cache-control')).toBe('no-store');
-    expect(await response.json()).toEqual({ token: TOKEN, expiresAt: stored.expiresAt });
+    expect(await response.json()).toEqual(issued);
   });
 
   it('rate limits per client', async () => {
     const d = deps({ tokenRateLimiter: { take: () => false } });
     const response = await createTokenHandlers(d).POST(new Request('http://test', { method: 'POST' }));
     expect(response.status).toBe(429);
-    expect(d.issueToken).not.toHaveBeenCalled();
+    expect(d.issueTokens).not.toHaveBeenCalled();
   });
 
   it('hides unexpected errors', async () => {
     const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    const d = deps({ issueToken: async () => Promise.reject(new Error('disk full')) });
+    const d = deps({ issueTokens: async () => Promise.reject(new Error('disk full')) });
     const response = await createTokenHandlers(d).POST(new Request('http://test', { method: 'POST' }));
     expect(response.status).toBe(500);
     expect(await response.json()).toEqual({ error: 'Unexpected server error.' });
@@ -110,5 +117,14 @@ describe('/api/kpis', () => {
     const response = await createKpiHandlers(d).PUT(put('{}'));
     expect(response.status).toBe(422);
     expect(await response.json()).toEqual({ error: 'bad', details: ['kpis: required'] });
+  });
+
+  it('PUT maps read-only tokens to 403', async () => {
+    d = deps({
+      uploadReport: async () => Promise.reject(new AppError('TOKEN_READ_ONLY', 'read only')),
+    });
+    const response = await createKpiHandlers(d).PUT(put('{}'));
+    expect(response.status).toBe(403);
+    expect(await response.json()).toEqual({ error: 'read only' });
   });
 });

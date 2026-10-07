@@ -2,6 +2,7 @@ import { headers } from 'next/headers';
 import { isAppError } from '@/application/errors';
 import { DashboardView } from '@/presentation/components/DashboardView';
 import { Notice } from '@/presentation/components/Notice';
+import { SharedDashboardView } from '@/presentation/components/SharedDashboardView';
 import { TokenPanel } from '@/presentation/components/TokenPanel';
 import { UploadForm } from '@/presentation/components/UploadForm';
 import { clientIp } from '@/presentation/http/handlers';
@@ -20,12 +21,17 @@ export default async function HomePage({ searchParams }: { searchParams: SearchP
       if (isAppError(error, 'TOKEN_INVALID')) return null;
       throw error;
     });
-    return dashboard ? (
+    if (!dashboard) {
+      return (
+        <Notice title="Token expired or unknown">
+          <p>Tokens expire one week after the last KPI upload.</p>
+        </Notice>
+      );
+    }
+    return dashboard.access === 'write' ? (
       <DashboardView token={token} dashboard={dashboard} />
     ) : (
-      <Notice title="Token expired or unknown">
-        <p>Tokens expire one week after the last KPI upload.</p>
-      </Notice>
+      <SharedDashboardView dashboard={dashboard} />
     );
   }
 
@@ -37,10 +43,14 @@ export default async function HomePage({ searchParams }: { searchParams: SearchP
     );
   }
 
-  const issued = await container.issueToken();
+  const issued = await container.issueTokens();
   return (
     <>
-      <TokenPanel token={issued.token} expiresAt={formatDateTime(issued.expiresAt)} />
+      <TokenPanel
+        writeToken={issued.writeToken}
+        readToken={issued.readToken}
+        expiresAt={formatDateTime(issued.expiresAt)}
+      />
       <section className="panel" aria-labelledby="upload-heading">
         <h2 id="upload-heading">Upload KPIs</h2>
         <p>
@@ -50,7 +60,7 @@ export default async function HomePage({ searchParams }: { searchParams: SearchP
           </a>
           ).
         </p>
-        <UploadForm token={issued.token} />
+        <UploadForm token={issued.writeToken} />
       </section>
     </>
   );

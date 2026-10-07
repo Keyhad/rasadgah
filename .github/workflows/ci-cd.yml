@@ -88,10 +88,14 @@ jobs:
           docker compose up -d --no-build --wait
           base=https://localhost
           curl -fsSk --retry 15 --retry-all-errors --retry-delay 1 "$base/api/health"
-          token=$(curl -fsSk -X POST "$base/api/tokens" | jq -r .token)
-          curl -fsSk -X PUT "$base/api/kpis" -H "Authorization: Bearer $token" \
+          tokens=$(curl -fsSk -X POST "$base/api/tokens")
+          write=$(echo "$tokens" | jq -r .writeToken)
+          read=$(echo "$tokens" | jq -r .readToken)
+          curl -fsSk -X PUT "$base/api/kpis" -H "Authorization: Bearer $write" \
             -H 'Content-Type: application/json' --data-binary @public/kpis.example.json
-          curl -fsSk "$base/?token=$token" | grep -q 'Monthly revenue'
+          curl -fsSk "$base/?token=$read" | grep -q 'Monthly revenue'
+          test "$(curl -sSko /dev/null -w '%{http_code}' -X PUT -H "Authorization: Bearer $read" \
+            --data-binary @public/kpis.example.json "$base/api/kpis")" = 403
           test "$(curl -sSko /dev/null -w '%{http_code}' -H 'Authorization: Bearer bogus' "$base/api/kpis")" = 401
           test "$(curl -sSo /dev/null -w '%{http_code}' http://localhost/)" = 308
 

@@ -50,7 +50,7 @@ Part of the logo lockup and the application header. Always lower case except as 
 | Context      | Line                                                                       |
 | ------------ | -------------------------------------------------------------------------- |
 | How it works | "Upload a file. See your KPIs. No account needed."                         |
-| Token model  | "One token, one dashboard."                                                |
+| Token model  | "Write privately. Share read-only."                                        |
 | Lifetime     | "Keep it fresh: every upload keeps your dashboard alive for another week." |
 | Automation   | "From JSON to dashboard with one `curl`."                                  |
 | Self-hosting | "Your server, your numbers, one `docker compose up`."                      |
@@ -59,22 +59,24 @@ Part of the logo lockup and the application header. Always lower case except as 
 
 | Principle           | Do                                                                   | Avoid                                                     |
 | ------------------- | -------------------------------------------------------------------- | --------------------------------------------------------- |
-| Plain               | "Save this token. It is the only way to access your dashboard."      | "Securely persist your unique credential identifier."     |
-| Precise             | "Tokens expire 7 days after the last upload."                        | "Tokens expire after a while."                            |
+| Plain               | "Keep the write token secret. Share the read token."                 | "Securely persist your unique credential identifier."     |
+| Precise             | "Both tokens expire 7 days after the last upload."                   | "Tokens expire after a while."                            |
 | Honest about limits | "A lost token cannot be recovered."                                  | Implying accounts, recovery or history that do not exist. |
 | Calm                | "Too many tokens were requested from your network. Try again later." | Alarmist wording, exclamation marks.                      |
 | Short               | Button labels of one or two words: "Upload", "Copy".                 | Sentences on buttons.                                     |
 
 ## 6. Product Vocabulary
 
-| Use                    | Do not use                 | Reason                                                                       |
-| ---------------------- | -------------------------- | ---------------------------------------------------------------------------- |
-| token, access token    | ID, key, password, session | One term everywhere; matches the UI and API.                                 |
-| dashboard              | report page, board         | The page at `/?token=`.                                                      |
-| KPI file               | data file, payload         | The uploaded JSON ([INT-001](../../../02-specification/kpi-file-format.md)). |
-| upload                 | import, sync               | The only write action.                                                       |
-| on target / off target | pass / fail, green / red   | Matches the KPI cards.                                                       |
-| expires                | is deleted (in user text)  | Deletion is an implementation detail; expiry is what users experience.       |
+| Use                    | Do not use                                 | Reason                                                                       |
+| ---------------------- | ------------------------------------------ | ---------------------------------------------------------------------------- |
+| write token            | admin token, secret key, password          | Grants uploading and the editor; matches the UI and API (`writeToken`).      |
+| read token, share link | viewer key, public link                    | Grants viewing only; matches the UI and API (`readToken`).                   |
+| editor                 | admin page, dashboard (for the write view) | The page at `/?token=<write token>`.                                         |
+| shared view            | public page, report page                   | The page at `/?token=<read token>`.                                          |
+| KPI file               | data file, payload                         | The uploaded JSON ([INT-001](../../../02-specification/kpi-file-format.md)). |
+| upload                 | import, sync                               | The only write action.                                                       |
+| on target / off target | pass / fail, green / red                   | Matches the KPI cards.                                                       |
+| expires                | is deleted (in user text)                  | Deletion is an implementation detail; expiry is what users experience.       |
 
 ## 7. Related Documents
 

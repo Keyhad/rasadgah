@@ -9,7 +9,10 @@ export interface SessionStore {
 }
 
 export interface TokenGenerator {
+  /** A new write token. */
   generate(): string;
+  /** Derives the read token; must be one-way and never return its input. */
+  readTokenFor(writeToken: string): string;
 }
 
 export interface Clock {
